@@ -14,7 +14,9 @@ async function initHero() {
   let field = null;
   try {
     const { createSignalField } = await import('./signal-field.js');
-    field = createSignalField(host, { mode: 'stream', progress: reducedMotion ? 1 : 0 });
+    // Keep the channel calm behind the copy and the figure caption.
+    const protect = ['.hero__title', '.hero__lead', '.hero__fig'].map((s) => hero.querySelector(s)).filter(Boolean);
+    field = createSignalField(host, { mode: 'stream', progress: reducedMotion ? 1 : 0, protect });
   } catch (err) {
     // No 3D engine available: the hero stays a calm dark section and the text still reads.
     return;

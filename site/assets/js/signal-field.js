@@ -12,7 +12,10 @@
       // Optional composition helpers (all optional, all modes unless noted):
       protect: [titleEl, leadEl, buttonsEl], // Element or up to 4 Elements over the field: the
                              // particles behind them are dimmed (rounded rect with a soft 56px edge).
-                             // Measured relative to the container on every resize.
+                             // Measured relative to the container on every resize. In noise mode
+                             // the clean spot also fades out over them. Without it, tune calms the
+                             // upper left (the top on portrait) and stream the lower left, where
+                             // the home and over ons heroes put their copy.
       protectStrength: 0.88, // 0..1, default per mode: tune 0.88, stream 0.7, calm 0.6, noise 0.5
       safeTop: titleEl,      // tune: the wave stays below this line. A number (px from the container
                              // top) or an Element (or array): its bottom edge plus 24px.
@@ -32,7 +35,9 @@
                              // the wave sits (left/right: its middle at the screen edges). Also sent
                              // as a 'signalfield:band' event on the container whenever it moves.
   Events on the container: 'signalfield:band' (see above) and 'signalfield:fallback'
-  ({ detail: { reason } }, when the 2D renderer takes over: 'no-webgl2', 'shader' or 'context-lost').
+  ({ detail: { reason, error } }, when the 2D renderer takes over: 'no-webgl2', 'shader',
+  'context-lost', or 'forced' by the lab option). It fires after createSignalField() returns, so a
+  listener added right after creation hears about a fallback that happened during it.
 
   Create the field after the first paint (requestIdleCallback, or a short timeout), like home.js does:
   context creation costs a few milliseconds of main thread time.
@@ -43,8 +48,10 @@
     hashed from the vertex id, and a handful of per-frame uniforms.
     The frame loop writes those uniforms in place (no per-frame objects, numbers go to GL through
     typed arrays), rebuilds cameras only when their inputs change, and reads no layout.
-  * The backing store is the css size times the device pixel ratio (capped at 2, 1.5 for low
-    density), within a pixel budget, so very large screens do not multiply the fill cost.
+  * The backing store is the css size times the device pixel ratio (capped at 2; 1.5 at low
+    density, except a phone-sized tune canvas; 1 for the 2D fallback), within a pixel budget, so
+    very large screens do not multiply the fill cost. Long thread sprites discard what lies outside
+    their ellipse, so only the visible sliver of each square point sprite is blended.
   * Blending is "soft additive" premultiplied alpha (ONE, ONE_MINUS_SRC_ALPHA with a partial
     alpha): overlaps glow, but converge to a bounded color instead of clipping to white.
   * Colors are read from --scope-bg, --scope-noise, --scope-signal and --scope-text on the
@@ -70,7 +77,9 @@ const COUNTS = {
 const TUNE_MAX = 42000;
 // Front row spacing of the settled sheet in css px (the rows are laid out for it).
 const TUNE_ROW_PX = 7.5;
-const TUNE_GAMMA = 0.85; // v = s^gamma: rows a little closer toward the front, still compressing behind
+// v = s^gamma: rows closer toward the front, so the back rows (compressed by perspective) stay
+// far enough apart to resolve instead of aliasing into moire; they still converge with depth.
+const TUNE_GAMMA = 0.7;
 // Backing-store pixel budgets: WebGL, and the 2D fallback (which often runs in software).
 const PIXEL_BUDGET = 5.2e6;
 const PIXEL_BUDGET_2D = 2.4e6;
@@ -372,7 +381,7 @@ function tuneFrame(F, a, safeFrac, cssH) {
     // half way, a little lower on wide, short screens (their headline scales with the width, so
     // it is taller). Portrait: as low as possible with the front row still on screen.
     const fallback = lerp(clamp(0.95 - h, 0.45, 0.62), clamp(0.5 + 0.25 * (a - 1.6), 0.5, 0.62), land);
-    target = safeFrac >= 0 ? clamp(Math.max(safeFrac, fallback * tall), 0.3, 0.8) : fallback;
+    target = safeFrac >= 0 ? clamp(lerp(safeFrac, Math.max(safeFrac, fallback), tall), 0.3, 0.8) : fallback;
     if (target + h <= 0.96) break;
   }
   // Still too tall: the band rises above the safe line (the copy over it stays protected).
@@ -385,9 +394,10 @@ function tuneFrame(F, a, safeFrac, cssH) {
 
 // Rows of the tune grid: the settled rows sit about TUNE_ROW_PX apart at the front and compress
 // behind it; the columns take the rest of the particles, so each row is dense enough to be a thread.
-function tuneRows(count, a, cssH) {
+// Laid out for the frame the sheet is drawn in (the safe line can refit it flatter).
+function tuneRows(count, a, cssH, safeFrac) {
   const H = cssH > 0 ? cssH : 800;
-  const F = tuneFrame(TF_BUILD, a, -1, H);
+  const F = tuneFrame(TF_BUILD, a, safeFrac >= 0 ? safeFrac : -1, H);
   setCam(F.dist, 0, F.pitch, F.tanY, a, 0);
   orbitEye(EYE0);
   viewProj(TMP_M, EYE0);
@@ -409,18 +419,24 @@ function buildTune(count, rows) {
   // Rows from back to front (stored in that order so the soft "over" blending layers correctly).
   // Every row is a thread: evenly spaced particles from a random phase (so the columns never line
   // up), with only a hair of jitter across, so the settled sheet reads as fine striations.
+  // The jitter itself is hashed in the shader; the buffer carries its scale (z along, w across).
   rows = Math.max(20, rows || 50);
   const cols = Math.max(120, Math.floor(count / rows));
   const n = rows * cols;
   const d = new Float32Array(n * 4);
   const r = rng(0x51f7a1);
+  const ju = 0.3 / cols;
   let i = 0;
   for (let row = 0; row < rows; row++) {
     const off = r();
+    const s = (row + 0.5) / rows;
+    const v = Math.pow(s, TUNE_GAMMA);
+    const jv = (0.12 / rows) * TUNE_GAMMA * Math.pow(s, TUNE_GAMMA - 1); // dv/ds times the jitter
     for (let c = 0; c < cols; c++, i += 4) {
-      const s = clamp((row + 0.5 + (r() - 0.5) * 0.12) / rows, 0, 1);
-      d[i] = (c + off + (r() - 0.5) * 0.3) / cols;
-      d[i + 1] = Math.pow(s, TUNE_GAMMA);
+      d[i] = (c + off) / cols;
+      d[i + 1] = v;
+      d[i + 2] = ju;
+      d[i + 3] = jv;
     }
   }
   return { data: d, count: n };
@@ -436,12 +452,14 @@ function buildStream(count) {
   const d = new Float32Array(n * 4);
   let k = 0;
   for (; k < ambient; k++) d[k * 4 + 3] = 1;
+  const js = 0.3 / per; // jitter along the thread (hashed in the shader)
   for (let th = 0; th < threads; th++) {
     const w = (th / (threads - 1)) * 2 - 1;
     const off = r();
     for (let j = 0; j < per; j++, k++) {
-      d[k * 4] = (j + off + (r() - 0.5) * 0.3) / per;
+      d[k * 4] = (j + off) / per;
       d[k * 4 + 1] = w;
+      d[k * 4 + 2] = js;
     }
   }
   return { data: d, count: n };
@@ -529,6 +547,7 @@ vec3 g_tan = vec3(1.0, 0.0, 0.0); // world direction of the long axis
 float g_stretch = 1.0;            // 1 round; 2.5 a thread two and a half times longer than wide
 float g_glow = 0.0;               // wide faint halo
 vec2 g_minS = vec2(1.5, 1.5);     // minimum point size in css px: near, and beyond depth 18
+float g_rowPx = 0.0;              // distance to the neighbouring thread in device px (0: not set)
 
 uint hashU(uint x) {
   x ^= x >> 16u; x *= 0x7feb352du;
@@ -580,6 +599,7 @@ void emitPoint(vec3 world, vec3 rgb, float I, float occl, float worldSize, float
   if (size > bokeh) I *= pow(bokeh / size, 1.25);
   // Threads: the sprite grows to hold the long axis and spreads the same total light over it.
   vec2 axis = vec2(1.0, 0.0);
+  float stretch = g_stretch;
   if (g_stretch > 1.01) {
     vec4 c2 = u_viewProj * vec4(world + g_tan * 0.05, 1.0);
     vec2 dp = (c2.xy / max(c2.w, 1e-3) - ndc) * u_res;
@@ -588,6 +608,16 @@ void emitPoint(vec3 world, vec3 rgb, float I, float occl, float worldSize, float
     float grow = 1.0 + (g_stretch - 1.0) * 0.67;
     size *= grow;
     I *= g_stretch / (grow * grow);
+    // Threads closer together than about 3 device px cannot show as lines: they alias into moire.
+    // There the sprite widens across (same length, same light) until neighbours blend into an
+    // even sheen. Only where rows crowd: far back, and slopes seen edge on.
+    if (g_rowPx > 0.0) {
+      float across = size / g_stretch;
+      float want = min(size, max(across, 2.2 * g_rowPx));
+      want = mix(across, want, 1.0 - smoothstep(2.2, 3.6, g_rowPx));
+      I *= across / want;
+      stretch = size / want;
+    }
   }
   size = min(size, u_maxPoint);
   // Atmospheric depth.
@@ -601,22 +631,24 @@ void emitPoint(vec3 world, vec3 rgb, float I, float occl, float worldSize, float
   gl_PointSize = size;
   v_col = vec4(rgb * I, I * occl);
   v_core = core;
-  v_shape = vec4(axis, g_stretch, g_glow);
+  v_shape = vec4(axis, stretch, g_glow);
 }
 `;
 
 // Mode "tune": static noise in depth (progress 0) tunes into a flowing wave sheet (progress 1).
 const VS_TUNE = VS_HEAD + `
-// a_a: u (across), v (0 back .. 1 front), unused, unused
+// a_a: u (across), v (0 back .. 1 front), jitter scale along the row, jitter scale across rows
 // u_p0: zBack, zFront, camera distance, sheet half width per unit of depth
 // u_p1: amplitude, wave number, angular speed, phase per unit z
 // u_p2: cos(pitch), cloud half height, landscape (0 portrait .. 1 landscape), tuning side (1 right, 0 left)
-// u_p3: ripple x, ripple z, ripple strength, unused
+// u_p3: ripple x, ripple z, ripple strength, rows of the grid
 // u_aux: base view-projection without pointer parallax (tuning order and composition)
+const float ROW_DVDS = ${TUNE_GAMMA.toFixed(4)};       // rows sit at v = s^gamma: dv/ds = gamma * v^(1 - 1/gamma)
+const float ROW_POW = ${(1 - 1 / TUNE_GAMMA).toFixed(6)};
 void main() {
   uint id = uint(gl_VertexID);
-  float u = a_a.x;
-  float v = a_a.y;
+  float u = a_a.x + (rnd(id, 12u) - 0.5) * a_a.z;
+  float v = clamp(a_a.y + (rnd(id, 13u) - 0.5) * a_a.w, 0.0, 1.0);
   float r0 = rnd(id, 0u), r1 = rnd(id, 1u), r2 = rnd(id, 2u), r3 = rnd(id, 3u), r4 = rnd(id, 4u);
   float r5 = rnd(id, 5u);
   float t = u_time;
@@ -680,9 +712,11 @@ void main() {
   float tide = -0.1 + 1.3 * p + 0.36 * smoothstep(0.0, 0.2, p);
   float lp = clamp((tide - d) / 0.2, 0.0, 1.0);
   float e = lp * lp * (3.0 - 2.0 * lp);
-  // A sparse residue of static stays at the far edges. Sparse enough that the threads it leaves
-  // keep running: every sprite overlaps several neighbours, so one missing barely shows.
-  float stay = step(r1, 0.14 * smoothstep(0.8, 1.1, abs(ndcX)));
+  // A sparse residue of static stays at the far edges. It comes from particles whose place in the
+  // sheet is off screen (the sheet is wider than the view), pulled in over the edges, so no thread
+  // on screen loses a particle to it.
+  float stay = step(r1, 0.5 * smoothstep(1.0, 1.12, abs(ndcX)));
+  noi.x *= 1.0 - 0.14 * stay;
   e *= 1.0 - stay;
   float arc = sin(PI * e);
   float drift = mix(1.0, -1.0, u_p2.w) * 0.15 * (r2 - 0.2); // in flight, a small arc with the tide
@@ -706,8 +740,8 @@ void main() {
   float sI = mix(0.55, 1.2, frontRow) * shade * lit * (0.84 + 0.16 * crest) * (1.0 + 2.2 * renv);
   float twinkle = pow(max(0.5 + 0.5 * sin(t * 1.9 + r4 * TAU), 0.0), 6.0);
   float glint = step(rnd(id, 11u), 0.008) * step(0.45, v) * smoothstep(0.7, 1.0, crest) * twinkle;
-  vec3 sC = mix(u_cSignal, u_cText, glint * 0.4);
-  sI += glint * 0.35;
+  vec3 sC = mix(u_cSignal, u_cText, glint * 0.5);
+  sI += glint * 0.9;
 
   // In flight, particles dim (the mess is never the brightest part) and change color late.
   vec3 rgb = mix(nC, sC, smoothstep(0.45, 0.65, e));
@@ -718,7 +752,7 @@ void main() {
   // Settled threads are drawn mostly "over" (alpha near the light): many overlapping sprites then
   // converge on the signal color instead of clipping it to peach.
   float silk = smoothstep(0.5, 0.95, e);
-  float occ = mix(mix(0.35, 0.62, e), 0.9, silk);
+  float occ = mix(mix(0.35, 0.62, e), mix(0.9, 0.6, glint), silk);
   float silkSize = u_res.x < 600.0 ? 0.024 : 0.03;
   float size = mix(0.022 * mix(1.0, mix(0.8, 1.6, grain), vol), silkSize, e) + spark * 0.008 + glint * 0.012;
   // Static grains are short horizontal dashes (analog snow); settled particles become fine threads
@@ -728,6 +762,18 @@ void main() {
   core = mix(core, 0.3, glint) + spark * 0.3;
   g_tan = vec3(1.0, dydx * e, 0.0);
   g_stretch = mix(mix(2.2, 4.5, silk), 1.0, arc);
+  // Settled threads: how far the next row lands on screen (device px). Where rows crowd (far back,
+  // slopes seen edge on) emitPoint blends them into a sheen instead of aliasing. Far away they
+  // keep a minimum width and dim instead.
+  if (silk > 0.01) {
+    float dz = (u_p0.y - u_p0.x) * ROW_DVDS * pow(max(v, 0.01), ROW_POW) / max(u_p3.w, 1.0);
+    float dydz = amp * u_p1.w * slope + gRip.y;
+    vec4 c0 = u_viewProj * vec4(sig, 1.0);
+    vec4 c1 = u_viewProj * vec4(sig + vec3(0.0, dydz * dz, dz), 1.0);
+    vec2 dr = (c1.xy / max(c1.w, 1e-3) - c0.xy / max(c0.w, 1e-3)) * u_res * (0.5 * u_dpr);
+    g_rowPx = length(dr);
+  }
+  g_minS = vec2(1.5, mix(1.5, 2.0, silk));
   g_glow = 0.2 * silk * smoothstep(0.45, 0.8, v);
   emitPoint(pos, rgb, I, occ, size, core);
 }
@@ -758,7 +804,7 @@ vec3 curveN(float s) {
 
 // Mode "stream": a river of light flowing along a smooth 3D channel, static outside it.
 const VS_STREAM = VS_HEAD + VS_CURVE + `
-// a_a: s0, across (-1..1), unused, kind (0 channel, 1 ambient)
+// a_a: s0, across (-1..1), jitter scale along the thread, kind (0 channel, 1 ambient)
 // u_p0: flow phase, flow spread phase, channel half width, twist
 // u_p1: tanX, tanY, ambient near depth, ambient far depth
 
@@ -791,7 +837,7 @@ void main() {
   float loose = 1.0 - p;
   float r0 = rnd(id, 0u), r1 = rnd(id, 1u), r2 = rnd(id, 2u), r3 = rnd(id, 3u);
   if (a_a.w < 0.5) {
-    float s = fract(a_a.x + u_p0.x + (r3 - 0.5) * u_p0.y);
+    float s = fract(a_a.x + (rnd(id, 7u) - 0.5) * a_a.z + u_p0.x + (r3 - 0.5) * u_p0.y);
     float lane = a_a.y;
     // Across and thickness jitter, scaled with looseness, so tight threads are clean.
     float w = lane + (rnd(id, 4u) - 0.5) * 0.015 * loose;
@@ -959,12 +1005,20 @@ void main() {
   vec2 c = gl_PointCoord * 2.0 - 1.0;
   // Ellipse along the sprite axis (a circle when the stretch is 1).
   float a = dot(c, v_shape.xy);
-  float b = (v_shape.x * c.y - v_shape.y * c.x) * v_shape.z;
+  float p = v_shape.x * c.y - v_shape.y * c.x;
+  float b = p * v_shape.z;
   float r2 = a * a + b * b;
+  // The glow is a wider ellipse around the same axis: round for short sprites, about three times
+  // the thread's width for long ones.
+  float gb = p * max(v_shape.z * 0.36, 1.0);
+  float g2 = a * a + gb * gb;
+  // Outside both nothing is drawn: a long thread fills only a sliver of its square sprite, and
+  // skipping the rest skips its blending.
+  if (r2 >= 1.0 && (v_shape.w <= 0.0 || g2 >= 1.0)) discard;
   float halo = max(1.0 - r2, 0.0);
   halo *= halo;
   float core = exp(-r2 * 8.0);
-  float glow = max(1.0 - dot(c, c), 0.0);
+  float glow = max(1.0 - g2, 0.0);
   glow *= glow * v_shape.w;
   outColor = v_col * (halo * 0.7 + core * mix(0.3, 0.75, v_core) + glow);
 }
@@ -1086,8 +1140,8 @@ const FRAMES = {
       } else {
         p3[0] = 0; p3[1] = 0; p3[2] = 0;
       }
-      p3[3] = 0;
     }
+    U.p3[3] = S.layout; // rows of the grid (the thread spacing in depth)
   },
 
   stream(S, U) {
@@ -1302,7 +1356,8 @@ function createGLRenderer(canvas, hooks) {
       P.ready = true;
     } else if (!gl.isContextLost()) {
       // Only now ask for the details: they are the expensive, blocking part.
-      error = gl.getShaderInfoLog(P.vs) || gl.getShaderInfoLog(P.fs) || gl.getProgramInfoLog(P.prog) || 'shader program failed';
+      error = gl.getShaderInfoLog(P.vs) || gl.getShaderInfoLog(P.fs) || gl.getProgramInfoLog(P.prog) || '';
+      error = error.replace(/\u0000/g, '').trim() || 'shader program failed';
       P.failed = true;
       hooks.onFail(error);
     }
@@ -1513,9 +1568,11 @@ function create2DRenderer(canvas) {
   let mode = 'tune';
   const P0 = [0, 0, 0], P1 = [0, 0, 0];
   const TUNE_ROWS = 18;
-  // Row gradients of the tune fallback, rebuilt only when the tuning state, size or colors change.
-  const grads = new Array(TUNE_ROWS).fill(null);
-  const gKey = { tide: NaN, W: 0, side: -1, land: -1, noise: null, signal: null };
+  // Tune fallback: every row is drawn as two solid paths, its noise part and its signal part
+  // (solid strokes are far cheaper than gradients when the canvas is rasterized in software).
+  // Their styles are built once per color set; the points go through reused typed arrays.
+  const rowStyle = { colors: null, noise: new Array(TUNE_ROWS).fill(''), signal: new Array(TUNE_ROWS).fill('') };
+  let ptX = new Float32Array(256), ptY = new Float32Array(256), ptE = new Float32Array(256);
 
   function tune(S, W, H, d) {
     const c = S.colors, t = S.time;
@@ -1528,34 +1585,49 @@ function create2DRenderer(canvas) {
     // Same place as the WebGL wave: between the band's top line and its front edge.
     const top = (S.band ? S.band.top : H / d * 0.5) * d;
     const bottom = Math.max(top + 40 * d, (S.band ? S.band.bottom : H / d * 0.86) * d);
-    const fresh = gKey.tide !== tide || gKey.W !== W || gKey.side !== side || gKey.land !== land || gKey.noise !== c.noise || gKey.signal !== c.signal;
-    if (fresh) {
-      gKey.tide = tide; gKey.W = W; gKey.side = side; gKey.land = land; gKey.noise = c.noise; gKey.signal = c.signal;
+    if (rowStyle.colors !== c) {
+      rowStyle.colors = c;
+      for (let r = 0; r < rows; r++) {
+        const f = r / (rows - 1);
+        const alpha = 0.1 + 0.62 * f * f;
+        rowStyle.noise[r] = rgba(c.noise, alpha * 0.7);
+        rowStyle.signal[r] = rgba(c.signal, alpha);
+      }
     }
+    const n = Math.floor((W + 2 * step) / step) + 1;
+    if (ptX.length < n) { ptX = new Float32Array(n); ptY = new Float32Array(n); ptE = new Float32Array(n); }
     for (let r = 0; r < rows; r++) {
       const f = r / (rows - 1);
       const yBase = lerp(top, bottom, 0.12 + 0.7 * f);
       const amp = (bottom - top) * (0.03 + 0.12 * f);
-      if (fresh || !grads[r]) {
-        const alpha = 0.1 + 0.62 * f * f;
-        const g = ctx.createLinearGradient(0, 0, W, 0);
-        for (let s = 0; s <= 8; s++) {
-          const e = tuneSettle(tide, s / 8, f, side, land);
-          g.addColorStop(s / 8, rgba(e > 0.55 ? c.signal : c.noise, alpha * lerp(0.7, 1, e)));
-        }
-        grads[r] = g;
-      }
-      ctx.strokeStyle = grads[r];
-      ctx.lineWidth = (0.6 + 1.4 * f) * d;
-      ctx.beginPath();
-      for (let x = -step; x <= W + step; x += step) {
+      let k = 0;
+      for (let x = -step; k < n; x += step, k++) {
         const e = tuneSettle(tide, x / W, f, side, land);
-        const noise = (hashF(r * 7919 + Math.round(x / step) * 131 + tick * 104729) - 0.5) * (bottom - top) * 0.3 * (0.4 + 0.6 * f);
+        const noise = (hashF(r * 7919 + k * 131 + tick * 104729) - 0.5) * (bottom - top) * 0.3 * (0.4 + 0.6 * f);
         const sine = amp * Math.sin((x / W) * 9.5 * (1.4 - 0.5 * f) - t * 0.75 + r * 0.16 + 0.6);
-        const y = yBase + noise * (1 - e) + sine * e;
-        if (x === -step) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        ptX[k] = x;
+        ptY[k] = yBase + noise * (1 - e) + sine * e;
+        ptE[k] = e;
       }
-      ctx.stroke();
+      ctx.lineWidth = (0.6 + 1.4 * f) * d;
+      // Pass 0 strokes the segments that are still noise, pass 1 the tuned ones.
+      for (let pass = 0; pass < 2; pass++) {
+        let open = false, any = false;
+        ctx.beginPath();
+        for (let i = 1; i < n; i++) {
+          const tuned = ptE[i - 1] + ptE[i] > 1.1;
+          if (tuned === (pass === 1)) {
+            if (!open) ctx.moveTo(ptX[i - 1], ptY[i - 1]);
+            ctx.lineTo(ptX[i], ptY[i]);
+            open = true;
+            any = true;
+          } else open = false;
+        }
+        if (any) {
+          ctx.strokeStyle = pass ? rowStyle.signal[r] : rowStyle.noise[r];
+          ctx.stroke();
+        }
+      }
     }
   }
 
@@ -1879,24 +1951,28 @@ export function createSignalField(container, options = {}) {
     return SZ;
   }
 
+  const safeFrac = (h) => (S.safeTop >= 0 && h > 0 ? S.safeTop / h : -1);
+
   function applyScene() {
     S.density = resolveDensity(S.densityPref);
     const sz = containerSize();
     const n = particleCount(S.mode, S.density, sz[0], sz[1]);
     S.count = n;
-    S.layout = S.mode === 'tune' ? tuneRows(n, sz[0] / sz[1], sz[1]) : 0;
+    S.layout = S.mode === 'tune' ? tuneRows(n, sz[0] / sz[1], sz[1], safeFrac(sz[1])) : 0;
     if (!R) return;
     if (!R.setScene(S.mode, n, S.layout)) swapTo2D('shader'); // shader problem: 2D on a fresh canvas
   }
+  measureCopy(); // the safe line shapes the tune frame, so the first layout already fits it
   applyScene();
 
-  // The tune grid is laid out for a size (rows) and an area (particles); rebuild it when the
-  // screen turns or grows a lot. A rebuild is a short loop and one buffer upload.
+  // The tune grid is laid out for a frame (rows) and an area (particles); rebuild it when the
+  // screen turns, grows a lot, or the copy moves the frame. A rebuild is a short loop and one
+  // buffer upload.
   function layoutDrift() {
     if (S.mode !== 'tune' || !S.layout || !R || !R.supported) return false;
     const sz = containerSize();
     if (Math.abs(particleCount('tune', S.density, sz[0], sz[1]) - S.count) / S.count > 0.1) return true;
-    const want = tuneRows(S.count, sz[0] / sz[1], sz[1]);
+    const want = tuneRows(S.count, sz[0] / sz[1], sz[1], safeFrac(sz[1]));
     return Math.abs(want - S.layout) / S.layout > 0.12;
   }
 
@@ -1984,9 +2060,10 @@ export function createSignalField(container, options = {}) {
   function onCopyLayout() {
     if (destroyed) return;
     if (measureCopy()) {
+      if (layoutDrift()) applyScene(); // the safe line can refit the sheet: rows follow the frame
       updateBand();
       // The loop picks the new rects up by itself; a paused or reduced field draws once.
-      if (!raf) requestFrame();
+      redrawIdle();
     }
   }
 
@@ -2016,13 +2093,13 @@ export function createSignalField(container, options = {}) {
     if (!force && w === S.cssW && h === S.cssH && dpr === S.dpr) return false;
     S.cssW = w; S.cssH = h; S.dpr = dpr;
     S.aspect = w > 0 && h > 0 ? w / h : 1;
+    measureCopy();
     if (w > 0 && h > 0) {
       // A container that was hidden or detached at creation may only now have its theme colors.
       if (wasEmpty) S.colors = readColors(container);
       if (layoutDrift()) applyScene();
     }
     R.resize(Math.max(1, Math.round(w * dpr)), Math.max(1, Math.round(h * dpr)));
-    measureCopy();
     updateBand();
     // Draw right away so a resize never shows an empty buffer (retried while a program compiles,
     // so a paused field is never left blank).

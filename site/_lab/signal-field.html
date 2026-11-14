@@ -16,7 +16,9 @@
        layout=stack (hero: lead and buttons under the headline on desktop too),
        stage=full (hero below 960px: full-screen field instead of the page's lower 70 percent),
        ghost=1 (overlay laid out and protected, but invisible: for measuring what sits behind it),
-       protect=0 (overlay shown, but not passed to the engine). */
+       protect=0 (overlay shown, but not passed to the engine),
+       from=left (tune: lock in from the left, the brief's original order; the default is the right,
+       the SIGNAAL side). */
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; }
     body {
@@ -312,6 +314,7 @@
       forceFallback: state.force2d,
     };
     if (state.time !== null) options.time = state.time;
+    if (q.get('from') === 'left') options.tuneFrom = 'left';
     if (mock && state.protect) {
       options.protect = mock.querySelectorAll('[data-protect]');
       // Home: the wave stays below the headline and, where the deck sits beside it or above the
@@ -322,6 +325,9 @@
         options.safeTop = stacked ? mock.querySelector('h1') : [mock.querySelector('h1'), mock.querySelector('.mock__deck')];
       }
     }
+    // Listen before creating: a fallback during creation is announced right after it.
+    let fallbackReason = '';
+    stage.addEventListener('signalfield:fallback', (e) => { fallbackReason = e.detail ? e.detail.reason : '?'; });
     const field = createSignalField(stage, options);
     window.__field = field;
 
@@ -406,10 +412,20 @@
     };
     requestAnimationFrame(tick);
 
+    // Built with text nodes: the error string comes from the GPU driver.
+    const statLine = (parts) => {
+      statsEl.textContent = '';
+      for (const [text, hot] of parts) {
+        const node = hot ? document.createElement('span') : document.createTextNode(text);
+        if (hot) node.textContent = text;
+        statsEl.appendChild(node);
+      }
+    };
     setInterval(() => {
-      const kind = field.supported ? 'webgl2' : '2d fallback';
-      const err = field.error ? ` <span>${field.error.slice(0, 80)}</span>` : '';
-      statsEl.innerHTML = `<span>${field.fps.toFixed(0)}</span> fps · ${field.particleCount.toLocaleString('en-US')} pts · ${field.density} · ${kind}${err}`;
+      const kind = field.supported ? 'webgl2' : '2d fallback' + (fallbackReason ? ' (' + fallbackReason + ')' : '');
+      const parts = [[field.fps.toFixed(0), true], [` fps · ${field.particleCount.toLocaleString('en-US')} pts · ${field.density} · ${kind}`, false]];
+      if (field.error) parts.push([' ' + field.error.slice(0, 80), true]);
+      statLine(parts);
     }, 500);
   </script>
 </body>

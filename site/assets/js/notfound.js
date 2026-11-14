@@ -22,7 +22,9 @@ async function initField() {
   if (!host) return;
   try {
     const { createSignalField } = await import('./signal-field.js');
-    createSignalField(host, { mode: 'noise', progress: 0, interactive: true, density: 'auto' });
+    // The clean wave fragment stays off the headline, the sentence and the buttons.
+    const protect = ['.nf__title', '.nf__lead', '.nf__actions'].map((s) => document.querySelector(s)).filter(Boolean);
+    createSignalField(host, { mode: 'noise', progress: 0, interactive: true, density: 'auto', protect });
   } catch (err) {
     // No engine: the section stays a plain dark surface and every link still works.
   }
