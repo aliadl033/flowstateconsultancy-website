@@ -97,9 +97,10 @@
   .hero__field canvas { animation: oo-fade calc(var(--dur-slow) * 3) var(--ease-flow) both; }
 }
 
+/* Transform only, like the home hero: the copy is readable from the first paint (fast LCP). */
 @keyframes oo-rise {
-  from { opacity: 0; transform: translateY(var(--space-24)); }
-  to { opacity: 1; transform: none; }
+  from { transform: translateY(var(--space-24)); }
+  to { transform: none; }
 }
 @keyframes oo-fade {
   from { opacity: 0; }
