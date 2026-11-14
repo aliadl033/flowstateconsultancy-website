@@ -1,0 +1,63 @@
+/* ==========================================================================
+   Flow State Consultancy · notfound.css
+   404 "Geen signaal": one full screen of static from the noise field, with the
+   message on the left and an instrument readout bottom right.
+   Semantic tokens only (see tokens.css).
+   ========================================================================== */
+
+.nf {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  background-color: var(--scope-bg);
+}
+
+.nf__field {
+  position: absolute;
+  inset: 0;
+}
+.nf__field > canvas { animation: nf-field-in 1.4s var(--ease-flow) both; }
+
+.nf__inner {
+  --nf-offset: calc(var(--header-h) + var(--space-48));
+  position: relative;
+  z-index: var(--z-base);
+  display: grid;
+  grid-template-rows: 1fr auto;
+  row-gap: var(--space-48);
+  padding-top: var(--nf-offset);
+  padding-bottom: var(--space-32);
+}
+
+.nf__content { align-self: center; }
+.nf__title { margin-top: var(--space-24); }
+.nf__lead { margin-top: var(--space-32); max-width: 34ch; }
+.nf__actions { margin-top: var(--space-48); }
+
+.nf__readout { justify-self: end; }
+
+@media (min-width: 960px) {
+  .nf__inner { padding-bottom: var(--space-48); }
+}
+
+/* Portrait screens: the tuned wave fragment wanders just below the middle of the field.
+   The message moves to the top and the field reaches a little past the bottom edge,
+   so the wave plays out under the text instead of behind it. */
+@media (max-width: 959.98px) and (orientation: portrait) {
+  .nf__content { align-self: start; }
+  .nf__field { bottom: -25%; }
+}
+
+/* Small phones: both buttons on one row */
+@media (max-width: 479px) {
+  .nf__actions { gap: var(--space-12); }
+  .nf__actions .btn--lg {
+    --btn-h: 48px;
+    padding: 0 var(--space-16);
+    font-size: var(--text-base);
+  }
+}
+
+@keyframes nf-field-in { from { opacity: 0; } }

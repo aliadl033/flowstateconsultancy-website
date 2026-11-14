@@ -1,0 +1,134 @@
+# Publishes a blog branch of the scheduled agent (automation/ROUTINE.md).
+# The agent pushes to main when its environment allows that. When it may only push claude/ branches, it pushes
+# claude/blog-<slug> instead. This workflow accepts only blog files on such a branch, puts it on top of main,
+# rebuilds, runs every test and check, moves main forward and starts the deploy.
+# Anything else waits for a person: an issue explains why, and GitHub e-mails it to the repository owner.
+# Needs: main must accept pushes from GitHub Actions (no rule that requires a pull request for main).
+name: Publish blog branch
+
+on:
+  push:
+    branches: ['claude/blog-*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blog-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Check and publish
+    if: github.event.deleted != true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # move main forward and delete the branch
+      actions: write # start the deploy: pushes made with this token do not start workflows by themselves
+    steps:
+      - name: Check out the branch with full history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Put the branch on top of the newest main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          # Generated files are rebuilt below, so on a conflict the version of the branch may win for now.
+          if ! git rebase -X theirs origin/main; then
+            git rebase --abort || true
+            echo "::error::The branch cannot be put on top of main without help from a person."
+            exit 1
+          fi
+
+      - name: Accept only blog files
+        shell: bash
+        run: |
+          git diff --name-status origin/main HEAD | tee changes.txt
+          # A new post with its brief, the log, and the files npm run build writes. Nothing else.
+          BAD=$(awk -F'\t' '
+            $1 == "A" && $2 ~ /^content\/blog\/[a-z0-9]+(-[a-z0-9]+)*\/(meta\.json|post\.md)$/ { next }
+            $1 == "A" && $2 ~ /^automation\/briefs\/[a-z0-9]+(-[a-z0-9]+)*\.md$/ { next }
+            $1 == "M" && $2 == "automation/log.md" { next }
+            ($1 == "A" || $1 == "M") && $2 ~ /^site\/blog\/[a-z0-9]+(-[a-z0-9]+)*\.html$/ { next }
+            $1 == "M" && ($2 == "site/sitemap.xml" || $2 == "site/feed.xml" || $2 == "site/robots.txt" || $2 == "site/index.html") { next }
+            { print }
+          ' changes.txt)
+          if [ -n "$BAD" ]; then
+            echo "::error::This branch changes files the blog agent may not change:"
+            echo "$BAD"
+            exit 1
+          fi
+          # site/index.html may change only between the blog:latest markers.
+          outside() { sed '/<!-- blog:latest:start -->/,/<!-- blog:latest:end -->/d'; }
+          if ! diff <(git show origin/main:site/index.html | outside) <(git show HEAD:site/index.html | outside) > /dev/null; then
+            echo "::error::site/index.html changed outside the blog:latest markers."
+            exit 1
+          fi
+          # The log only grows: every line that is on main stays, new lines go at the end.
+          MAIN_LOG=$(git show origin/main:automation/log.md)
+          BRANCH_LOG=$(git show HEAD:automation/log.md)
+          case "$BRANCH_LOG" in
+            "$MAIN_LOG"*) ;;
+            *) echo "::error::automation/log.md must keep every line that is on main and only add lines at the end."; exit 1 ;;
+          esac
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test the blog tooling
+        run: npm test
+
+      - name: Build the blog
+        run: npm run build
+
+      - name: Run the checks
+        run: npm run check
+
+      - name: Commit files the build changed
+        run: |
+          git add site/blog site/feed.xml site/robots.txt site/index.html
+          if ! git diff --cached --quiet; then git commit -m "Blog: rebuild generated files"; fi
+
+      - name: Move main forward
+        run: git push origin HEAD:main
+
+      - name: Start the deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+      - name: Delete the branch
+        run: git push origin --delete "$GITHUB_REF_NAME"
+
+  report:
+    name: Report a branch that was not published
+    needs: publish
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update an issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TITLE="Blogartikel niet gepubliceerd: $BRANCH"
+          BODY=$(printf 'De blogroutine pushte de branch %s, maar die kon niet automatisch naar main.\n\nBekijk de reden hier: %s\n\nKijk de branch na. Is alles in orde, voeg hem dan samen met main. Klopt er iets niet, verwijder dan de branch. Zolang de branch bestaat, publiceert de routine geen nieuwe artikelen.' "$BRANCH" "$RUN_URL")
+          OPEN=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$OPEN" ]; then
+            gh issue comment "$OPEN" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi

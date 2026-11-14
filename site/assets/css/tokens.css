@@ -1,0 +1,177 @@
+/* ==========================================================================
+   Flow State Consultancy · design tokens
+   The ONLY file with raw color values. Everything else uses semantic tokens.
+   Direction: warm editorial paper with a dark instrument inside it.
+   Serif headlines, mono readouts, one vermilion signal color.
+   ========================================================================== */
+
+:root {
+  /* ---------- Ramp (raw values, never referenced by components) ---------- */
+  --paper-50: #FAF8F3;
+  --paper-100: #F3EFE7;
+  --paper-200: #E9E3D7;
+  --paper-300: #D3CCBE;
+
+  --ink-950: #141513;
+  --ink-900: #1E201D;
+  --ink-800: #2A2D29;
+  --ink-700: #3A3D38;
+  --ink-600: #6E7168;
+
+  --stone-700: #5A5E56; /* muted text on paper   5.78:1 */
+  --stone-600: #666A61; /* subtle text on paper  4.82:1 */
+  --stone-500: #7A7D74; /* input boundary        3.65:1 */
+  --stone-300: #A4A79D; /* muted text on ink     7.50:1 */
+  --stone-400: #7E8178; /* subtle text on ink    4.62:1 */
+  --static-400: #8A9088; /* noise particles on ink */
+
+  --signal-500: #FF5A26; /* the brand color: fills, graphics, text on ink (5.88:1) */
+  --signal-400: #FF7445; /* primary hover */
+  --signal-600: #E84A17; /* primary active */
+  --signal-700: #D9460F; /* focus ring on paper (3.79:1) */
+  --signal-800: #B5370B; /* signal-colored text on paper (5.21:1) */
+  --signal-100: #FCE1D5; /* soft signal background */
+
+  --green-700: #1F7A4D;
+  --red-700: #B42318;
+
+  /* ---------- Semantic tokens (light / paper is the default theme) ---------- */
+  --bg: var(--paper-100);
+  --bg-subtle: var(--paper-200);
+  --surface: var(--paper-50);
+  --surface-hover: var(--paper-200);
+  --border: var(--paper-300);
+  --border-strong: var(--stone-500);
+  --rule: var(--ink-950);            /* editorial hairline rules */
+
+  --text: var(--ink-950);
+  --text-muted: var(--stone-700);
+  --text-subtle: var(--stone-600);
+
+  --primary: var(--signal-500);      /* the one action color */
+  --primary-hover: var(--signal-400);
+  --primary-active: var(--signal-600);
+  --primary-fg: var(--ink-950);
+
+  --accent: var(--signal-500);       /* graphics, signal line, dots */
+  --accent-text: var(--signal-800);  /* signal-colored text that must stay readable */
+  --accent-soft: var(--signal-100);
+  --noise: var(--stone-500);         /* the "noise" color in diagrams */
+
+  --success: var(--green-700);
+  --danger: var(--red-700);
+  --ring: var(--signal-700);
+
+  /* Instrument (dark) surfaces are always dark, regardless of theme */
+  --scope-bg: var(--ink-950);
+  --scope-raised: var(--ink-900);
+  --scope-grid: rgba(243, 239, 231, 0.06);
+  --scope-text: var(--paper-100);
+  --scope-muted: var(--stone-300);
+  --scope-noise: var(--static-400);
+  --scope-signal: var(--signal-500);
+
+  /* ---------- Typography ---------- */
+  --font-display: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-sans: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-xs: 0.75rem;    /* 12 */
+  --text-sm: 0.875rem;   /* 14 */
+  --text-base: 1rem;     /* 16 */
+  --text-lg: 1.125rem;   /* 18 */
+  --text-xl: 1.25rem;    /* 20 */
+  --text-2xl: 1.5rem;    /* 24 */
+  --text-3xl: 1.875rem;  /* 30 */
+  --text-4xl: 2.25rem;   /* 36 */
+  --text-5xl: 3rem;      /* 48 */
+  --text-6xl: 3.75rem;   /* 60 */
+  --text-7xl: 4.5rem;    /* 72 */
+  /* Fluid editorial display sizes (endpoints sit on the scale) */
+  --text-statement: clamp(1.75rem, 1.15rem + 2.4vw, 3rem);     /* 28 → 48: big statement paragraphs, pull quotes */
+  --text-display: clamp(2.25rem, 1.35rem + 3.6vw, 4.5rem);     /* 36 → 72: section titles (h2) */
+  --text-display-xl: clamp(3rem, 1.1rem + 7.6vw, 8rem);        /* 48 → 128: page h1 */
+  --text-mega: clamp(4.5rem, 22.4vw, 21rem);                  /* 72 → 336: footer wordmark only, spans the container */
+
+  --leading-tight: 0.95;
+  --leading-display: 1;
+  --leading-snug: 1.1;
+  --leading-heading: 1.2;
+  --leading-body: 1.6;
+
+  --tracking-tighter: -0.035em;
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-caps: 0.08em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  --measure: 60ch;
+
+  /* ---------- Spacing (8px grid; 4 is optical only) ---------- */
+  --space-4: 0.25rem;
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-24: 1.5rem;
+  --space-32: 2rem;
+  --space-48: 3rem;
+  --space-64: 4rem;
+  --space-96: 6rem;
+  --space-128: 8rem;
+  --space-section: clamp(4rem, 2.4rem + 6.4vw, 8rem);   /* 64 → 128 vertical section padding */
+  --gutter: clamp(1rem, 0.6rem + 2vw, 3rem);           /* 16 → 48 side gutter */
+
+  /* ---------- Layout ---------- */
+  --container: 80rem;        /* 1280 */
+  --container-wide: 90rem;   /* 1440 */
+  --container-narrow: 47.5rem; /* 760 */
+  --header-h: 4.5rem;        /* 72 */
+
+  /* ---------- Shape ---------- */
+  --radius-sm: 4px;   /* buttons, inputs, tags, nested elements */
+  --radius-md: 8px;   /* cards, panels, media */
+  --radius-round: 999px; /* dots and status lights only */
+  --border-width: 1px;
+
+  --shadow-float: 0 12px 32px -12px rgba(20, 21, 19, 0.28), 0 2px 6px rgba(20, 21, 19, 0.08);
+
+  /* ---------- Motion ---------- */
+  --ease-flow: cubic-bezier(0.22, 0.8, 0.24, 1);   /* default: quick start, long settle */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --dur-slow: 480ms;
+
+  /* ---------- Layers ---------- */
+  --z-base: 1;
+  --z-sticky: 50;
+  --z-header: 100;
+  --z-menu: 200;
+  --z-toast: 300;
+}
+
+/* Dark "ink" sections remap the semantic layer so every component works on them.
+   The header borrows the same remap while it sits over a dark section. */
+.theme-ink,
+.site-header.on-dark,
+body[data-header="on-dark"] .site-header:not(.is-ready) {
+  --bg: var(--ink-950);
+  --bg-subtle: var(--ink-900);
+  --surface: var(--ink-900);
+  --surface-hover: var(--ink-800);
+  --border: var(--ink-700);
+  --border-strong: var(--ink-600);
+  --rule: var(--paper-100);
+
+  --text: var(--paper-100);
+  --text-muted: var(--stone-300);
+  --text-subtle: var(--stone-400);
+
+  --accent-text: var(--signal-500);
+  --accent-soft: rgba(255, 90, 38, 0.14);
+  --noise: var(--static-400);
+  --ring: var(--signal-500);
+}

@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Signal field lab</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../assets/css/fonts.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <style>
+    /* Development page only: never linked, removed before delivery.
+       URL params: mode, progress, t, frozen=1, density, panel=0, force2d=1, auto=1, size=560x520,
+       px/py (simulated pointer, fractions of the viewport),
+       overlay=hero|about|404 (mock page copy over the field, passed to the engine as protect),
+       layout=stack (hero: lead and buttons under the headline on desktop too),
+       stage=full (hero below 960px: full-screen field instead of the page's lower 70 percent),
+       ghost=1 (overlay laid out and protected, but invisible: for measuring what sits behind it),
+       protect=0 (overlay shown, but not passed to the engine). */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--scope-bg);
+      color: var(--scope-text);
+      font-family: var(--font-sans);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    .stage { position: fixed; inset: 0; background: var(--scope-bg); }
+    /* ?size=560x520 mimics an instrument panel (contact hero) on paper. */
+    body.is-panel { background: var(--bg); }
+    body.is-panel .stage {
+      inset: auto;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: calc(100vw - 2 * var(--gutter));
+      max-height: calc(100vh - 2 * var(--gutter));
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    /* ---------- Mock page copy (mirrors the real heroes, to judge composition) ---------- */
+    .mock { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+    .mock[hidden] { display: none; }
+    body.is-ghost .mock { visibility: hidden; }
+    .mock__wrap {
+      width: 100%;
+      max-width: calc(var(--container) + 2 * var(--gutter));
+      margin-inline: auto;
+      padding-inline: var(--gutter);
+    }
+    .mock h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-optical-sizing: auto;
+      font-weight: var(--weight-regular);
+      font-size: var(--text-display-xl);
+      line-height: var(--leading-tight);
+      letter-spacing: var(--tracking-tighter);
+      overflow-wrap: break-word;
+    }
+    .mock h1 em { font-style: italic; color: var(--scope-signal); }
+    .mock__lead {
+      margin: 0;
+      max-width: 36ch;
+      font-size: var(--text-lg);
+      line-height: var(--leading-body);
+      color: var(--scope-muted);
+    }
+    .mock__label, .mock__band, .mock__fig {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+      line-height: 1.34;
+      letter-spacing: var(--tracking-caps);
+      text-transform: uppercase;
+      color: var(--scope-muted);
+    }
+    .mock__actions { display: flex; flex-wrap: wrap; gap: var(--space-16); margin-top: var(--space-32); }
+    .mock-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 56px;
+      padding: 0 var(--space-32);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-lg);
+      font-weight: var(--weight-medium);
+    }
+    .mock-btn--primary { background: var(--scope-signal); color: var(--scope-bg); }
+    .mock-btn--secondary { border-color: var(--scope-text); color: var(--scope-text); }
+
+    /* Home hero: stacked on small screens (the field is the lower 70 percent there),
+       headline left and deck right from 960px. */
+    .mock--hero .mock__wrap { padding-top: calc(var(--header-h) + var(--space-32)); }
+    .mock--hero h1 { max-width: 9.5ch; }
+    .mock--hero .mock__deck { margin-top: var(--space-24); }
+    .mock__band { position: absolute; top: 62%; display: flex; align-items: center; gap: var(--space-8); transform: translateY(-50%); }
+    .mock__band::before, .mock__band::after { content: ""; display: block; width: var(--space-24); height: 1px; background: currentColor; opacity: 0.5; }
+    .mock__band--ruis { left: var(--gutter); }
+    .mock__band--ruis::before, .mock__band--signaal::after { display: none; }
+    .mock__band--signaal { right: var(--gutter); }
+    body.is-hero:not(.is-stage-full) .stage { top: auto; height: max(32.5rem, 70%); }
+    @media (max-width: 599px) {
+      .mock--hero .mock__lead { font-size: var(--text-base); }
+      .mock--hero .mock-btn { flex: 1 1 100%; }
+    }
+    @media (min-width: 960px) {
+      body.is-hero:not(.is-stage-full) .stage { top: 0; height: auto; }
+      .mock--hero .mock__wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+        column-gap: var(--space-48);
+        align-items: start;
+        padding-top: calc(var(--header-h) + var(--space-64));
+      }
+      .mock--hero .mock__deck { margin: 0; padding-top: var(--space-12); }
+      .mock--hero.is-stack .mock__wrap { display: block; }
+      .mock--hero.is-stack .mock__deck { margin-top: var(--space-24); padding-top: 0; }
+    }
+
+    /* Over ons hero: 88 percent of the height, copy at the bottom, caption for the channel. */
+    body.is-about .stage { bottom: auto; height: 88vh; }
+    .mock--about { bottom: auto; height: 88vh; display: flex; flex-direction: column; justify-content: flex-end; }
+    .mock--about .mock__wrap { padding-bottom: var(--space-64); }
+    .mock--about .mock__wrap > * + * { margin-top: var(--space-24); }
+    .mock--about h1 { max-width: 8.6em; }
+    .mock--about .mock__lead { max-width: 34rem; }
+    .mock__fig { position: absolute; top: calc(var(--header-h) + var(--space-16)); right: var(--gutter); }
+    @media (min-width: 768px) { .mock--about .mock__wrap { padding-bottom: var(--space-96); } }
+    @media (min-width: 960px) {
+      .mock__fig { top: auto; bottom: var(--space-96); right: max(var(--gutter), calc((100vw - var(--container)) / 2 + var(--gutter))); }
+    }
+
+    /* 404: copy in the middle on the left, field everywhere (reaching past the bottom on portrait). */
+    .mock--404 { display: flex; align-items: center; }
+    .mock--404 .mock__wrap { max-width: calc(var(--container-wide) + 2 * var(--gutter)); padding-top: calc(var(--header-h) + var(--space-48)); }
+    .mock--404 h1 { margin-top: var(--space-24); }
+    .mock--404 .mock__lead { margin-top: var(--space-32); max-width: 34ch; }
+    .mock--404 .mock__actions { margin-top: var(--space-48); }
+    @media (max-width: 959px) and (orientation: portrait) {
+      .mock--404 { align-items: flex-start; }
+      body.is-404 .stage { bottom: -25%; }
+    }
+    @media (max-width: 479px) {
+      .mock--404 .mock__actions { gap: var(--space-12); }
+      .mock--404 .mock-btn { min-height: 48px; padding: 0 var(--space-16); font-size: var(--text-base); }
+    }
+
+    /* ---------- Control panel ---------- */
+    .panel {
+      position: fixed;
+      z-index: 3;
+      right: var(--space-16);
+      bottom: var(--space-16);
+      width: 17.5rem;
+      padding: var(--space-16);
+      display: grid;
+      gap: var(--space-12);
+      background: var(--scope-raised);
+      border: var(--border-width) solid var(--scope-grid);
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--scope-muted);
+    }
+    .panel[hidden] { display: none; }
+    .panel__row { display: grid; grid-template-columns: 5.5rem 1fr auto; align-items: center; gap: var(--space-8); }
+    .panel label, .panel__title {
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-caps);
+    }
+    .panel__title { color: var(--scope-text); }
+    .panel select, .panel input[type="range"] { width: 100%; min-height: 2rem; }
+    .panel select {
+      font: inherit;
+      color: var(--scope-text);
+      background: var(--scope-bg);
+      border: var(--border-width) solid var(--scope-grid);
+      border-radius: var(--radius-sm);
+      padding: 0 var(--space-8);
+    }
+    .panel input[type="range"] { accent-color: var(--scope-signal); }
+    .panel input[type="checkbox"] { accent-color: var(--scope-signal); width: 1rem; height: 1rem; margin: 0; }
+    .panel output { min-width: 2.5rem; text-align: right; color: var(--scope-text); font-variant-numeric: tabular-nums; }
+    .panel__checks { display: flex; gap: var(--space-16); }
+    .panel__checks label { display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer; }
+    .panel__stats { color: var(--scope-text); font-variant-numeric: tabular-nums; }
+    .panel__stats span { color: var(--scope-signal); }
+    .panel :focus-visible { outline: 2px solid var(--scope-signal); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <div class="mock mock--hero" id="mock-hero" hidden>
+    <div class="mock__wrap">
+      <h1 data-protect data-safe>Verkopen zonder <em>ruis</em>.</h1>
+      <div class="mock__deck">
+        <p class="mock__lead" data-protect>Wij trainen en coachen salesteams, met telecom als specialisatie. We halen de ruis uit het gesprek, zodat je mensen beter luisteren, scherper doorvragen en vaker een deal sluiten.</p>
+        <div class="mock__actions" data-protect><span class="mock-btn mock-btn--primary">Plan een kennismaking</span><span class="mock-btn mock-btn--secondary">Zo werken we</span></div>
+      </div>
+    </div>
+    <p class="mock__band mock__band--ruis" data-band="left">Ruis</p>
+    <p class="mock__band mock__band--signaal" data-band="right">Signaal</p>
+  </div>
+
+  <div class="mock mock--about" id="mock-about" hidden>
+    <div class="mock__wrap">
+      <p class="mock__label">Over ons</p>
+      <h1 data-protect>Het beste verkoopgesprek voelt als <em>flow</em>.</h1>
+      <p class="mock__lead" data-protect>Flow State Consultancy traint en coacht salesteams. Goed verkopen is een vaardigheid die je kunt trainen, tot het zo natuurlijk gaat dat je er niet meer over nadenkt.</p>
+    </div>
+    <p class="mock__fig" data-protect>Fig. 1 · Het flowkanaal</p>
+  </div>
+
+  <div class="mock mock--404" id="mock-404" hidden>
+    <div class="mock__wrap">
+      <p class="mock__label">Fout 404</p>
+      <h1 data-protect>Geen <em>signaal</em>.</h1>
+      <p class="mock__lead" data-protect>Deze pagina bestaat niet, of hij is verplaatst. Stem af op een van deze pagina's.</p>
+      <div class="mock__actions" data-protect><span class="mock-btn mock-btn--primary">Naar de homepage</span><span class="mock-btn mock-btn--secondary">Contact</span></div>
+    </div>
+  </div>
+
+  <form class="panel" id="panel" aria-label="Signal field controls" hidden>
+    <div class="panel__title">Signal field lab</div>
+    <div class="panel__row">
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="tune">tune</option>
+        <option value="stream">stream</option>
+        <option value="calm">calm</option>
+        <option value="noise">noise</option>
+      </select>
+      <span></span>
+    </div>
+    <div class="panel__row">
+      <label for="progress">Progress</label>
+      <input type="range" id="progress" min="0" max="1" step="0.001" value="0">
+      <output id="progressOut" for="progress">0.00</output>
+    </div>
+    <div class="panel__row">
+      <label for="density">Density</label>
+      <select id="density">
+        <option value="auto">auto</option>
+        <option value="low">low</option>
+        <option value="medium">medium</option>
+        <option value="high">high</option>
+      </select>
+      <span></span>
+    </div>
+    <div class="panel__checks">
+      <label><input type="checkbox" id="autotune"> Auto-tune</label>
+      <label><input type="checkbox" id="frozen"> Frozen</label>
+    </div>
+    <div class="panel__stats" id="stats" aria-live="off">-- fps</div>
+  </form>
+
+  <script type="module">
+    import { createSignalField } from '../assets/js/signal-field.js';
+
+    const q = new URLSearchParams(location.search);
+    const num = (key) => {
+      const v = parseFloat(q.get(key));
+      return Number.isFinite(v) ? v : null;
+    };
+    const MODES = ['tune', 'stream', 'calm', 'noise'];
+    const DENSITIES = ['auto', 'low', 'medium', 'high'];
+    const OVERLAYS = ['hero', 'about', '404'];
+    const state = {
+      mode: MODES.includes(q.get('mode')) ? q.get('mode') : 'tune',
+      progress: Math.min(1, Math.max(0, num('progress') ?? 0)),
+      time: num('t'),
+      frozen: q.get('frozen') === '1',
+      density: DENSITIES.includes(q.get('density')) ? q.get('density') : 'auto',
+      overlay: OVERLAYS.includes(q.get('overlay')) ? q.get('overlay') : null,
+      panel: q.get('panel') !== '0',
+      force2d: q.get('force2d') === '1',
+      autotune: q.get('auto') === '1',
+      protect: q.get('protect') !== '0',
+    };
+
+    const stage = document.getElementById('stage');
+    const size = /^(\d{2,4})x(\d{2,4})$/.exec(q.get('size') || '');
+    if (size) {
+      document.body.classList.add('is-panel');
+      stage.style.width = size[1] + 'px';
+      stage.style.height = size[2] + 'px';
+    }
+
+    // Lay the mock copy out before the field is created, so the engine measures it right away.
+    let mock = null;
+    if (state.overlay && !size) {
+      mock = document.getElementById('mock-' + state.overlay);
+      mock.hidden = false;
+      document.body.classList.add('is-' + state.overlay);
+      if (q.get('layout') === 'stack') mock.classList.add('is-stack');
+      if (q.get('stage') === 'full') document.body.classList.add('is-stage-full');
+      if (q.get('ghost') === '1') document.body.classList.add('is-ghost');
+    }
+
+    const options = {
+      mode: state.mode,
+      progress: state.progress,
+      density: state.density,
+      interactive: true,
+      frozen: state.frozen,
+      forceFallback: state.force2d,
+    };
+    if (state.time !== null) options.time = state.time;
+    if (mock && state.protect) {
+      options.protect = mock.querySelectorAll('[data-protect]');
+      // Home: the wave stays below the headline and, where the deck sits beside it or above the
+      // field (split desktop, and every phone or tablet), below the deck too. The stacked desktop
+      // variant keeps the wave under the headline and protects the lead and buttons instead.
+      if (state.overlay === 'hero') {
+        const stacked = mock.classList.contains('is-stack') && innerWidth >= 960;
+        options.safeTop = stacked ? mock.querySelector('h1') : [mock.querySelector('h1'), mock.querySelector('.mock__deck')];
+      }
+    }
+    const field = createSignalField(stage, options);
+    window.__field = field;
+
+    // Pin the RUIS and SIGNAAL labels to the wave band, as the home page can.
+    const bandLabels = mock ? mock.querySelectorAll('[data-band]') : [];
+    const placeBand = (b) => {
+      if (!b || !bandLabels.length) return;
+      const top = stage.getBoundingClientRect().top;
+      for (const el of bandLabels) el.style.top = (top + b[el.dataset.band]) + 'px';
+    };
+    stage.addEventListener('signalfield:band', (e) => placeBand(e.detail));
+    placeBand(field.band);
+
+    const panel = document.getElementById('panel');
+    panel.hidden = !state.panel;
+
+    const modeEl = document.getElementById('mode');
+    const progressEl = document.getElementById('progress');
+    const progressOut = document.getElementById('progressOut');
+    const densityEl = document.getElementById('density');
+    const autoEl = document.getElementById('autotune');
+    const frozenEl = document.getElementById('frozen');
+    const statsEl = document.getElementById('stats');
+
+    modeEl.value = state.mode;
+    progressEl.value = String(state.progress);
+    progressOut.value = state.progress.toFixed(2);
+    densityEl.value = state.density;
+    autoEl.checked = state.autotune;
+    frozenEl.checked = state.frozen;
+
+    const syncUrl = () => {
+      const u = new URL(location.href);
+      u.searchParams.set('mode', state.mode);
+      u.searchParams.set('progress', state.progress.toFixed(3));
+      u.searchParams.set('density', state.density);
+      history.replaceState(null, '', u);
+    };
+
+    panel.addEventListener('submit', (e) => e.preventDefault());
+    modeEl.addEventListener('change', () => {
+      state.mode = modeEl.value;
+      field.setMode(state.mode);
+      syncUrl();
+    });
+    progressEl.addEventListener('input', () => {
+      state.progress = Number(progressEl.value);
+      progressOut.value = state.progress.toFixed(2);
+      field.setProgress(state.progress);
+      if (autoEl.checked) autoEl.checked = false;
+      syncUrl();
+    });
+    densityEl.addEventListener('change', () => {
+      state.density = densityEl.value;
+      field.setDensity(state.density);
+      syncUrl();
+    });
+    frozenEl.addEventListener('change', () => field.setFrozen(frozenEl.checked));
+
+    // Optional simulated pointer for screenshots: ?px=0.6&py=0.5 (fractions of the viewport).
+    const px = num('px'), py = num('py');
+    if (px !== null && py !== null) {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new PointerEvent('pointermove', {
+          clientX: px * innerWidth, clientY: py * innerHeight, pointerType: 'mouse', bubbles: true,
+        }));
+      });
+    }
+
+    // Auto-tune: sweep progress 0 to 1 and back, slowly.
+    let autoStart = performance.now();
+    autoEl.addEventListener('change', () => { autoStart = performance.now() - 4500 * Math.acos(1 - 2 * state.progress) / Math.PI; });
+    const tick = (now) => {
+      if (autoEl.checked) {
+        const p = 0.5 - 0.5 * Math.cos(((now - autoStart) / 9000) * Math.PI * 2);
+        state.progress = p;
+        progressEl.value = String(p);
+        progressOut.value = p.toFixed(2);
+        field.setProgress(p);
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+
+    setInterval(() => {
+      const kind = field.supported ? 'webgl2' : '2d fallback';
+      const err = field.error ? ` <span>${field.error.slice(0, 80)}</span>` : '';
+      statsEl.innerHTML = `<span>${field.fps.toFixed(0)}</span> fps · ${field.particleCount.toLocaleString('en-US')} pts · ${field.density} · ${kind}${err}`;
+    }, 500);
+  </script>
+</body>
+</html>

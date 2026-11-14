@@ -1,0 +1,633 @@
+/* ==========================================================================
+   Flow State Consultancy · diensten.css
+   Page styles for diensten.html: hero with an instrument band of quick links,
+   the four services with a sticky index, the filterable module catalogue,
+   the example route and the closing band. Semantic tokens only (tokens.css).
+   ========================================================================== */
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+.dhero {
+  /* room under the fixed header; kept in a property so the value stays one token expression */
+  --dhero-top: calc(var(--header-h) + var(--space-48));
+  padding-top: var(--dhero-top);
+}
+.dhero__title { margin-top: var(--space-24); }
+.dhero__intro { margin-top: var(--space-32); }
+
+@media (min-width: 960px) {
+  .dhero { --dhero-top: calc(var(--header-h) + var(--space-96)); }
+  .dhero__title { margin-top: var(--space-32); }
+  .dhero__intro {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    column-gap: var(--space-24);
+    margin-top: var(--space-48);
+  }
+  .dhero__intro > .lead { grid-column: 2; }
+}
+
+/* Instrument band: four channel selectors that jump to a service */
+.jumpband { margin-top: var(--space-48); }
+.jumpband__list {
+  display: grid;
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+.jumpband__item { border-bottom: 1px solid var(--border); }
+.jumpband__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  min-height: 56px;
+  padding-block: var(--space-16);
+  color: var(--text);
+  text-decoration: none;
+}
+.jumpband__link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 2px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur-slow) var(--ease-flow);
+}
+.jumpband__index {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.34;
+  letter-spacing: var(--tracking-caps);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  transition: color var(--dur-base) var(--ease-flow);
+}
+.jumpband__name {
+  flex: 1;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+}
+.jumpband__icon {
+  color: var(--text-muted);
+  transition: transform var(--dur-base) var(--ease-flow), color var(--dur-base) var(--ease-flow);
+}
+/* Hover only where a pointer can hover, so a tap on a phone leaves no stuck state */
+@media (hover: hover) {
+  .jumpband__link:hover::before { transform: scaleX(1); }
+  .jumpband__link:hover .jumpband__index { color: var(--accent-text); }
+  .jumpband__link:hover .jumpband__icon { color: var(--text); transform: translateY(4px); }
+}
+.jumpband__link:focus-visible::before { transform: scaleX(1); }
+.jumpband__link:focus-visible .jumpband__index { color: var(--accent-text); }
+.jumpband__link:active .jumpband__icon { transform: translateY(8px); }
+
+@media (min-width: 600px) {
+  .jumpband__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .jumpband__item:nth-child(odd) .jumpband__link { padding-right: var(--space-24); }
+  .jumpband__item:nth-child(even) { border-left: 1px solid var(--border); }
+  .jumpband__item:nth-child(even) .jumpband__link { padding-left: var(--space-24); }
+}
+@media (min-width: 960px) {
+  .jumpband { margin-top: var(--space-64); }
+  .jumpband__link { min-height: 72px; }
+}
+/* Four in a row once the longest name fits on one line */
+@media (min-width: 1280px) {
+  .jumpband__list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .jumpband__item + .jumpband__item { border-left: 1px solid var(--border); }
+  .jumpband__item + .jumpband__item .jumpband__link { padding-left: var(--space-24); }
+  .jumpband__link { padding-right: var(--space-24); }
+}
+
+/* Signal divider under the hero, with its two ends named. The line and its labels share one
+   draw reveal (on .dsignal__inner), so they wipe in together from noise to signal. */
+.dsignal { margin-top: var(--space-48); }
+.dsignal__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-12);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.34;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+@media (min-width: 960px) {
+  .dsignal { margin-top: var(--space-64); }
+}
+
+/* ==========================================================================
+   Services: sticky index (desktop) and four service articles
+   ========================================================================== */
+.svc-index { display: none; }
+
+@media (min-width: 960px) {
+  .services__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    column-gap: var(--space-24);
+    align-items: start;
+  }
+  .svc-index {
+    display: block;
+    position: sticky;
+    top: calc(var(--header-h) + var(--space-32));
+    z-index: var(--z-base);
+    padding-top: var(--space-32);
+    padding-right: var(--space-16);
+    border-top: 1px solid var(--rule);
+  }
+}
+
+.svc-index__label { margin-bottom: var(--space-24); }
+.svc-index__body { position: relative; }
+.svc-index__track {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--border);
+}
+.svc-index__fill {
+  position: absolute;
+  inset: 0;
+  background-color: var(--text);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+}
+.svc-index__list { list-style: none; }
+.svc-index__link {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-16);
+  min-height: 48px;
+  padding: var(--space-12) 0 var(--space-12) var(--space-24);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--dur-base) var(--ease-flow);
+}
+.svc-index__link::before {
+  content: "";
+  position: absolute;
+  left: -0.5px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--accent);
+  transform: scaleY(0);
+  transition: transform var(--dur-base) var(--ease-flow);
+}
+.svc-index__num {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--dur-base) var(--ease-flow);
+}
+@media (hover: hover) {
+  .svc-index__link:hover { color: var(--text); }
+}
+.svc-index__link.is-active { color: var(--text); }
+.svc-index__link.is-active::before { transform: scaleY(1); }
+.svc-index__link.is-active .svc-index__num { color: var(--accent-text); }
+.svc-index__cta { margin-top: var(--space-32); }
+
+/* One service: rule, title with its big index on the same baseline, short line, detail grid */
+.services__list { container: services / inline-size; }
+.service {
+  /* an in-page jump lands the rule on the line of the sticky index (header-h + space-32) */
+  scroll-margin-top: var(--space-16);
+  padding-top: var(--space-32);
+  border-top: 1px solid var(--rule);
+}
+.service + .service { margin-top: var(--space-96); }
+@media (min-width: 960px) {
+  .service + .service { margin-top: var(--space-128); }
+}
+
+.service__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "title index" "lead lead";
+  column-gap: var(--space-24);
+  align-items: baseline;
+}
+.service__index {
+  grid-area: index;
+  font-family: var(--font-mono);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-tighter);
+  color: var(--noise);
+  font-variant-numeric: tabular-nums;
+}
+.service__title { grid-area: title; }
+.service__lead { grid-area: lead; margin-top: var(--space-24); }
+/* Very narrow screens: the index goes above the title, so the title gets the full width */
+@media (max-width: 359px) {
+  .service__head {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "index" "title" "lead";
+    row-gap: var(--space-8);
+  }
+}
+
+/* Detail grid: one column, two columns once the service column is wide enough */
+.service__body {
+  display: grid;
+  row-gap: var(--space-48);
+  margin-top: var(--space-48);
+}
+@container services (min-width: 42rem) {
+  .service__body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-32);
+    row-gap: var(--space-64);
+    margin-top: var(--space-64);
+  }
+}
+@container services (min-width: 56rem) {
+  .service__body { column-gap: var(--space-48); }
+}
+.service__block { max-width: var(--measure); }
+.service__label { margin-bottom: var(--space-16); }
+.nowrap { white-space: nowrap; }
+
+/* "Wat je krijgt": hairline list with small signal dots */
+.signal-list {
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+.signal-list li {
+  position: relative;
+  padding: var(--space-12) 0 var(--space-12) var(--space-24);
+  border-bottom: 1px solid var(--border);
+}
+.signal-list li::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: calc(var(--space-12) + 0.8em - 3px);
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-round);
+  background-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* "Praktisch": definition list in a bordered card. In a narrow card each row stacks,
+   so the answers get the full width instead of a ragged column. */
+.service__spec { align-self: start; }
+.spec-card { container-type: inline-size; }
+.spec { display: grid; }
+.spec__row {
+  display: grid;
+  grid-template-columns: var(--space-96) minmax(0, 1fr);
+  column-gap: var(--space-16);
+  align-items: baseline;
+  padding-block: var(--space-12);
+  border-top: 1px solid var(--border);
+}
+.spec__row:first-child { padding-top: 0; border-top: 0; }
+.spec__row:last-child { padding-bottom: 0; }
+@container (max-width: 24rem) {
+  .spec__row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-4);
+  }
+}
+.spec dt {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.34;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.spec dd { margin: 0; }
+
+/* ==========================================================================
+   Training modules: filter toolbar and card grid
+   ========================================================================== */
+.modules {
+  background-color: var(--bg-subtle);
+  /* cards that leave during a filter stay inside the tonal band; clip creates no scroll container */
+  overflow: clip;
+}
+
+.module-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-16) var(--space-24);
+  margin-bottom: var(--space-32);
+}
+.module-filter__label { margin-bottom: var(--space-12); }
+.module-filter__group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--space-16);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--text);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--dur-base) var(--ease-flow),
+    border-color var(--dur-base) var(--ease-flow),
+    color var(--dur-base) var(--ease-flow),
+    transform var(--dur-fast) var(--ease-flow);
+}
+@media (hover: hover) {
+  .filter-btn:hover { border-color: var(--text); background-color: var(--surface); }
+}
+.filter-btn:active { transform: translateY(1px); }
+.filter-btn[aria-pressed="true"] {
+  border-color: var(--text);
+  background-color: var(--text);
+  color: var(--bg);
+}
+
+.module-count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.34;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.module-count::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-round);
+  background-color: var(--accent);
+}
+
+.module-grid {
+  position: relative;
+  display: grid;
+  /* rows keep their own height while diensten.js animates the grid height */
+  align-content: start;
+  gap: var(--space-16);
+  list-style: none;
+}
+@media (min-width: 600px) {
+  .module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-24); }
+}
+@media (min-width: 960px) {
+  .module-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.module-grid__item {
+  position: relative;
+  z-index: var(--z-base);
+  display: flex;
+}
+.module {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+/* The meta row comes after the title in the source (headings first for screen readers)
+   and is shown above it. */
+.module__meta {
+  order: -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+.module__duration {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 28px;
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.34;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.module__key { color: var(--text-muted); }
+/* Instrument meter for the length of a module: dagdeel 1, dag 2, meerdere sessies 3 */
+.module__meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.module__meter > span {
+  width: 8px;
+  height: 4px;
+  background-color: var(--border-strong);
+}
+.module__meter[data-level="1"] > span:first-child,
+.module__meter[data-level="2"] > span:nth-child(-n + 2),
+.module__meter[data-level="3"] > span { background-color: var(--text); }
+.module__no {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.module__title {
+  margin-top: var(--space-24);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-heading);
+}
+.module__text {
+  margin-top: var(--space-12);
+  color: var(--text-muted);
+}
+.module__tags {
+  margin-top: auto;
+  padding-top: var(--space-24);
+}
+.module .tag {
+  transition: color var(--dur-base) var(--ease-flow), border-color var(--dur-base) var(--ease-flow);
+}
+/* The tag that explains why a module matches the active channel */
+.module .tag.is-match {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+/* ==========================================================================
+   Example route: vertical below 1200px (on the 3/9 axis from 768px),
+   horizontal from 1200px
+   ========================================================================== */
+.route { position: relative; }
+.route__track {
+  position: absolute;
+  left: 5.5px;
+  top: 8px;     /* centre of the first node */
+  bottom: 0;    /* diensten.js ends it at the centre of the last node */
+  width: 1px;
+  background-color: var(--border);
+}
+.route__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -0.5px;
+  width: 2px;
+  background-color: var(--text);
+  transform-origin: 50% 0;
+}
+.route__steps {
+  position: relative;
+  display: grid;
+  row-gap: var(--space-48);
+  list-style: none;
+}
+.route__step {
+  position: relative;
+  display: grid;
+  grid-template-areas: "week" "title" "text";
+  align-content: start;
+  justify-items: start;
+  padding-left: var(--space-48);
+}
+.route__week {
+  grid-area: week;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.34;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--accent-text);
+  transition: color var(--dur-base) var(--ease-flow);
+}
+.route__title {
+  grid-area: title;
+  margin-top: var(--space-8);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-heading);
+}
+.route__text {
+  grid-area: text;
+  margin-top: var(--space-8);
+  max-width: 40ch;
+  color: var(--text-muted);
+}
+.route__node {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-round);
+  background-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  transition:
+    background-color var(--dur-base) var(--ease-flow),
+    border-color var(--dur-base) var(--ease-flow),
+    box-shadow var(--dur-base) var(--ease-flow);
+}
+/* Unlit state, only while diensten.js drives the route (no JS: everything lit) */
+.route.is-animated .route__step:not(.is-lit) .route__node {
+  border-color: var(--border-strong);
+  background-color: var(--bg);
+  box-shadow: 0 0 0 4px transparent;
+}
+.route.is-animated .route__step:not(.is-lit) .route__week { color: var(--text-muted); }
+
+/* Tablet and small laptop: still vertical, with the week in the left column and the step
+   on the 3/9 axis, so the line uses the full width */
+@media (min-width: 768px) {
+  .route {
+    /* centre of the title's first line, where the node sits */
+    --route-node-y: calc(var(--text-2xl) * var(--leading-heading) / 2);
+  }
+  .route__track { top: var(--route-node-y); }
+  .route__step {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    grid-template-areas: "week title" ". text";
+    column-gap: var(--space-24);
+    align-items: baseline;
+    padding-left: 0;
+  }
+  .route__week { padding-left: var(--space-48); }
+  .route__title { margin-top: 0; }
+  .route__text { max-width: var(--measure); }
+  .route__node { top: calc(var(--route-node-y) - 6px); }
+}
+
+@media (min-width: 1200px) {
+  .route__track {
+    left: 0;
+    /* ends under the centre of the last node: one column width minus half a node, rounded up */
+    right: calc((100% - 4 * var(--space-24)) / 5 - var(--space-8));
+    top: calc(var(--space-48) - 0.5px);
+    bottom: auto;
+    width: auto;
+    height: 1px;
+  }
+  .route__fill {
+    top: -0.5px;
+    bottom: auto;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 2px;
+    transform-origin: 0 50%;
+  }
+  .route__steps {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    column-gap: var(--space-24);
+    row-gap: 0;
+  }
+  .route__step {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--space-24) var(--space-48) auto auto;
+    grid-template-areas: "week" "node" "title" "text";
+    align-items: normal;
+  }
+  .route__week { align-self: end; padding-left: 0; }
+  .route__node {
+    position: relative;
+    top: auto;
+    grid-area: node;
+    align-self: center;
+  }
+  .route__title { margin-top: var(--space-16); }
+  .route__text { max-width: 40ch; }
+}

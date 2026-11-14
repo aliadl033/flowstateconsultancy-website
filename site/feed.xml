@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Signaal, de blog van Flow State</title>
+    <link>https://flowstateconsultancy.nl/blog/</link>
+    <description>Artikelen over verkopen, coachen en telecom, van Flow State Consultancy.</description>
+    <language>nl-nl</language>
+    <atom:link href="https://flowstateconsultancy.nl/feed.xml" rel="self" type="application/rss+xml"/>
+    <lastBuildDate>Sat, 14 Nov 2026 00:00:00 +0100</lastBuildDate>
+    <item>
+      <title>Afkoelperiode bij deurverkoop: zo verkoop je aan de deur zonder druk</title>
+      <link>https://flowstateconsultancy.nl/blog/afkoelperiode-deurverkoop-verkopen-zonder-druk.html</link>
+      <guid isPermaLink="true">https://flowstateconsultancy.nl/blog/afkoelperiode-deurverkoop-verkopen-zonder-druk.html</guid>
+      <pubDate>Sat, 14 Nov 2026 00:00:00 +0100</pubDate>
+      <category>Markt</category>
+      <description>Het kabinet wil een afkoelperiode bij deurverkoop. Lees wat het voorstel inhoudt, wat nu al geldt en hoe je verkopers aan de deur werken zonder druk.</description>
+    </item>
+    <item>
+      <title>Bezwaren behandelen in telecom: uitzoeken in plaats van wegpraten</title>
+      <link>https://flowstateconsultancy.nl/blog/bezwaren-behandelen-in-telecom.html</link>
+      <guid isPermaLink="true">https://flowstateconsultancy.nl/blog/bezwaren-behandelen-in-telecom.html</guid>
+      <pubDate>Sat, 14 Nov 2026 00:00:00 +0100</pubDate>
+      <category>Sales</category>
+      <description>Leer bezwaren behandelen in telecom: zoek in vier stappen uit wat de klant bedoelt. Met voorbeeldzinnen voor “te duur”, “geen tijd” en “ik zit nog vast”.</description>
+    </item>
+  </channel>
+</rss>

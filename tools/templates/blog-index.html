@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ pageTitle }}</title>
+  <meta name="description" content="{{ description }}">
+  <link rel="canonical" href="{{ canonical }}">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="theme-color" content="#141513">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+  <link rel="alternate" type="application/rss+xml" title="{{ feedTitle }}" href="{{ feedUrl }}">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="{{ locale }}">
+  <meta property="og:site_name" content="{{ siteName }}">
+  <meta property="og:title" content="{{ ogTitle }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:url" content="{{ canonical }}">
+  <meta property="og:image" content="{{ ogImage }}">
+  <meta property="og:image:width" content="{{ ogImageWidth }}">
+  <meta property="og:image:height" content="{{ ogImageHeight }}">
+  <meta property="og:image:alt" content="{{ ogImageAlt }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="/assets/fonts/newsreader-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/blog.css">
+  <script>document.documentElement.classList.add('js');setTimeout(function(){if(!window.__fsCore){document.documentElement.classList.add('no-anim');}},3000);</script>
+  <script defer src="/assets/vendor/gsap.min.js"></script>
+  <script defer src="/assets/vendor/ScrollTrigger.min.js"></script>
+  <script defer src="/assets/vendor/SplitText.min.js"></script>
+  <script defer src="/assets/vendor/lenis.min.js"></script>
+  <script type="module" src="/assets/js/blog.js"></script>
+  <script type="application/ld+json">
+  {{{ jsonLd }}}
+  </script>
+</head>
+<body data-header="on-paper">
+  <a class="skip-link" href="#main">Naar de inhoud</a>
+
+  {{{ header }}}
+
+  <main id="main">
+    <section class="blog-hero" aria-labelledby="blog-title">
+      <div class="container blog-hero__grid">
+        <div class="blog-hero__meta">
+          <p class="label">Blog</p>
+        </div>
+        <div class="blog-hero__main">
+          <h1 class="display-xl blog-hero__title" id="blog-title">Signaal.</h1>
+          <p class="lead blog-hero__lead">{{ lead }}</p>
+          {{{ facts }}}
+        </div>
+      </div>
+    </section>
+
+    {{{ featured }}}
+
+    {{{ archive }}}
+
+    {{{ empty }}}
+
+    {{{ cta }}}
+  </main>
+
+  {{{ footer }}}
+</body>
+</html>

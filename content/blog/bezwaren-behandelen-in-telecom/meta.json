@@ -1,0 +1,69 @@
+{
+  "title": "Bezwaren behandelen in telecom: uitzoeken in plaats van wegpraten",
+  "seoTitle": "Bezwaren behandelen in telecom: 4 stappen",
+  "description": "Leer bezwaren behandelen in telecom: zoek in vier stappen uit wat de klant bedoelt. Met voorbeeldzinnen voor \"te duur\", \"geen tijd\" en \"ik zit nog vast\".",
+  "slug": "bezwaren-behandelen-in-telecom",
+  "date": "2026-11-14",
+  "updated": "2026-11-14",
+  "category": "Sales",
+  "primaryKeyword": "bezwaren behandelen",
+  "keywords": [
+    "bezwaarbehandeling",
+    "omgaan met bezwaren",
+    "bezwaren in een verkoopgesprek",
+    "prijsbezwaar",
+    "schijnbezwaar",
+    "bezwaren telefonische verkoop"
+  ],
+  "sources": [
+    {
+      "title": "Telecomabonnement opzeggen",
+      "publisher": "ACM ConsuWijzer",
+      "url": "https://consument.acm.nl/telefoon-internet-en-televisie/abonnementen/wanneer-abonnement-opzeggen",
+      "date": "2026-10-06"
+    },
+    {
+      "title": "Telefoonnummer meenemen",
+      "publisher": "ACM ConsuWijzer",
+      "url": "https://consument.acm.nl/vergelijken-en-overstappen/telecom/telefoonnummer-meenemen",
+      "date": "2026-07-22"
+    },
+    {
+      "title": "Vanaf 1 juli strengere regels voor telemarketing: alleen nog maar als klant toestemming heeft gegeven",
+      "publisher": "ACM",
+      "url": "https://www.acm.nl/nl/publicaties/vanaf-1-juli-strengere-regels-voor-telemarketing-alleen-nog-maar-als-klant-toestemming-heeft-gegeven",
+      "date": "2026-06-25"
+    },
+    {
+      "title": "It Doesn't Hurt to Ask: Question-Asking Increases Liking",
+      "publisher": "Journal of Personality and Social Psychology",
+      "url": "https://www.hks.harvard.edu/centers/cpl/publications/it-doesnt-hurt-ask-question-asking-increases-liking",
+      "date": "2017-04-27"
+    }
+  ],
+  "faq": [
+    {
+      "q": "Wat is bezwaarbehandeling?",
+      "a": "Bezwaarbehandeling is de manier waarop je reageert als een klant twijfelt of nee zegt. Je laat de klant uitpraten, zoekt met doorvragen uit wat er achter het bezwaar zit, beantwoordt dat en vraagt daarna om de volgende stap."
+    },
+    {
+      "q": "Wat is het verschil tussen een echt bezwaar en een schijnbezwaar?",
+      "a": "Een echt bezwaar is de reden waarom de klant nog geen ja zegt. Een schijnbezwaar is een reden die hij noemt om het gesprek af te ronden, terwijl er iets anders speelt. Met een doorvraag hoor je welke van de twee het is."
+    },
+    {
+      "q": "Hoe reageer je als een klant zegt dat het te duur is?",
+      "a": "Vraag eerst waarmee de klant vergelijkt en wat hij nu betaalt. Dan weet je of het om de prijs, de waarde of iets anders gaat, en kun je gericht en eerlijk antwoorden."
+    },
+    {
+      "q": "Kan een klant overstappen als zijn telecomcontract nog loopt?",
+      "a": "Ja, volgens ACM ConsuWijzer mag dat, maar vaak betaalt de klant dan kosten, bijvoorbeeld voor de maanden die het abonnement nog zou lopen. Na de vaste looptijd kan hij kosteloos opzeggen met een opzegtermijn van maximaal een maand."
+    }
+  ],
+  "internalLinks": [
+    "/diensten.html#gespreksanalyse",
+    "/diensten.html#training",
+    "/diensten.html#coaching",
+    "/diensten.html#teamleiders",
+    "/blog/afkoelperiode-deurverkoop-verkopen-zonder-druk.html"
+  ]
+}

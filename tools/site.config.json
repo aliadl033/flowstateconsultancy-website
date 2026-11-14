@@ -1,0 +1,62 @@
+{
+  "siteUrl": "https://flowstateconsultancy.nl",
+  "siteName": "Flow State Consultancy",
+  "shortName": "Flow State",
+  "titleSuffix": " | Flow State",
+  "maxTitleLength": 60,
+  "language": "nl-NL",
+  "locale": "nl_NL",
+  "organization": {
+    "type": "ProfessionalService",
+    "name": "Flow State Consultancy",
+    "legalName": "Flowstate Consultancy B.V.",
+    "alternateName": ["Flowstate Consultancy", "Flow State"],
+    "description": "Flow State Consultancy traint en coacht salesteams, met telecom als specialisatie: outbound, inbound en retentie, retail, deur-aan-deur en de zakelijke markt.",
+    "email": "ali@flowstateconsultancy.nl",
+    "kvk": "98730185",
+    "btwId": "[BTW-ID]",
+    "street": "Bredesteeg 6",
+    "postalCode": "3811 WS",
+    "city": "Amersfoort",
+    "country": "NL",
+    "areaServed": "Nederland",
+    "logo": { "path": "/assets/img/apple-touch-icon.png", "width": 180, "height": 180 },
+    "image": "/assets/img/og-image.png",
+    "knowsAbout": ["Salestraining", "Sales coaching", "Telecom", "Telesales", "Klantbehoud en retentie", "Gespreksanalyse", "Coaching voor teamleiders", "Deur-aan-deur verkoop"],
+    "sameAs": []
+  },
+  "defaultImage": {
+    "path": "/assets/img/og-image.png",
+    "width": 1200,
+    "height": 630,
+    "alt": "Flow State Consultancy: verkopen zonder ruis. Sales training en coaching, specialisatie telecom."
+  },
+  "blog": {
+    "name": "Signaal",
+    "fullName": "Signaal, de blog van Flow State",
+    "path": "/blog/",
+    "seoTitle": "Signaal: blog over sales, coaching en telecom",
+    "description": "Signaal is de blog van Flow State Consultancy: praktische artikelen over verkopen, salescoaching en telecom, voor verkopers en teamleiders.",
+    "lead": "Artikelen over verkopen, coachen en telecom, van Flow State Consultancy.",
+    "categories": ["Sales", "Telecom", "Coaching", "Teamleiders", "Retentie", "Markt"],
+    "servicePaths": ["/diensten.html"],
+    "wordsPerMinute": 220,
+    "minWords": 700,
+    "maxWords": 2200,
+    "feedItems": 20,
+    "latestOnHome": 3,
+    "related": 3,
+    "archiveRows": 12
+  },
+  "staticPages": [
+    { "file": "index.html", "path": "/", "title": "Home" },
+    { "file": "diensten.html", "path": "/diensten.html", "title": "Diensten en trainingen" },
+    { "file": "over-ons.html", "path": "/over-ons.html", "title": "Over ons" },
+    { "file": "contact.html", "path": "/contact.html", "title": "Contact" },
+    { "file": "privacy.html", "path": "/privacy.html", "title": "Privacyverklaring" }
+  ],
+  "indexNow": {
+    "key": "bf1bf6b8a80c5149811cfa84ad36e8d7",
+    "endpoint": "https://api.indexnow.org/indexnow"
+  }
+}

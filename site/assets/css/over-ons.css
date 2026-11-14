@@ -1,0 +1,472 @@
+/* ==========================================================================
+   Flow State Consultancy · over-ons.css
+   Over ons: stream hero, the flow channel sequence, principles, telecom,
+   way of working. Semantic tokens only (tokens.css); shared parts in base.css.
+   Mono micro labels use the shared .label class in the markup; only position,
+   color and layout overrides live here.
+   ========================================================================== */
+
+/* ---------- Hero (dark, stream field) ---------- */
+.hero {
+  --hero-top: calc(var(--header-h) + var(--space-32));
+  position: relative;
+  display: grid;
+  align-items: end;
+  min-height: 88vh;
+  min-height: 88svh;
+  padding-top: var(--hero-top);
+  padding-bottom: var(--space-64);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero__field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--scope-bg);
+}
+.hero__field canvas { display: block; }
+
+/* Keeps the headline readable where the channel runs behind it.
+   The first declaration is the fallback for browsers without color-mix() (iOS Safari 16.0 and 16.1). */
+.hero__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to top, var(--scope-bg) 0%, transparent 62%),
+    linear-gradient(to right, var(--scope-bg) 0%, transparent 55%);
+  background-image:
+    linear-gradient(to top, color-mix(in srgb, var(--scope-bg) 82%, transparent) 0%, transparent 62%),
+    linear-gradient(to right, color-mix(in srgb, var(--scope-bg) 55%, transparent) 0%, transparent 55%);
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: var(--space-32);
+  align-items: end;
+}
+.hero__content > * + * { margin-top: var(--space-24); }
+.hero__title { max-width: 8.6em; }
+.hero__lead { max-width: 34rem; }
+
+/* Figure caption: only shown once the field renders (no JS or no engine: nothing to caption). */
+.hero__fig { white-space: nowrap; }
+.hero:not(.has-field) .hero__fig { visibility: hidden; }
+
+/* Below 960px the caption moves to the top corner, so the headline keeps the full width. */
+@media (max-width: 959.98px) {
+  .hero__inner { position: static; }
+  .hero__content { position: relative; z-index: 2; }
+  .hero__fig {
+    position: absolute;
+    z-index: 2;
+    top: calc(var(--header-h) + var(--space-16));
+    right: var(--gutter);
+  }
+}
+@media (max-width: 359px) {
+  .hero__title { font-size: var(--text-4xl); }
+}
+@media (min-width: 768px) {
+  .hero { padding-bottom: var(--space-96); }
+}
+@media (min-width: 960px) {
+  .hero__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-48);
+  }
+}
+
+/* Entrance timing derives from the motion tokens: a 960ms rise with a 75ms stagger. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero {
+    --oo-rise: calc(var(--dur-slow) * 2);
+    --oo-stagger: calc(var(--dur-fast) / 2);
+  }
+  .hero__label,
+  .hero__title,
+  .hero__lead { animation: oo-rise var(--oo-rise) var(--ease-flow) both; }
+  .hero__title { animation-delay: var(--oo-stagger); }
+  .hero__lead { animation-delay: calc(var(--oo-stagger) * 2); }
+  .hero.has-field .hero__fig { animation: oo-fade calc(var(--dur-slow) * 2.5) var(--ease-flow) var(--dur-slow) both; }
+  .hero__field canvas { animation: oo-fade calc(var(--dur-slow) * 3) var(--ease-flow) both; }
+}
+
+@keyframes oo-rise {
+  from { opacity: 0; transform: translateY(var(--space-24)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes oo-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- De naam ---------- */
+/* The story behind the name reads at lead size; 34em keeps it near 70 characters a line. */
+.naam__prose {
+  max-width: 34em;
+  font-size: var(--text-lg);
+}
+
+/* Body column: content that hangs from the same edge as the section titles. */
+@media (min-width: 960px) {
+  .body-col {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    column-gap: var(--space-24);
+  }
+  .body-col > * { grid-column: 2; }
+}
+
+/* ---------- Flow channel diagram ---------- */
+.flow { margin-top: var(--space-64); }
+
+.flow__stage {
+  display: grid;
+  gap: var(--space-48);
+}
+
+.flow__figure {
+  width: 100%;
+  max-width: 32rem;
+  margin: 0;
+}
+
+.flow__plot {
+  position: relative;
+  aspect-ratio: 1 / 1;
+}
+
+.flow__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Zone hatching (print style): agitated diagonals for stress, flat lines for boredom. */
+.flow__zone-fill { opacity: 0; }
+.flow__zone-fill[data-zone="stress"] { fill: url(#flow-hatch-stress); }
+.flow__zone-fill[data-zone="boredom"] { fill: url(#flow-hatch-boredom); }
+.flow__hatch {
+  fill: none;
+  stroke: var(--text-subtle);
+  stroke-width: 1;
+  stroke-opacity: 0.45;
+}
+.flow__band { fill: var(--accent-soft); }
+.flow__edge {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.flow__ticks {
+  fill: none;
+  stroke: var(--text-subtle);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+/* Axes as in the Home teaser: muted hairlines, so the story arrows lead. */
+.flow__axis-line,
+.flow__axis-head {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+/* Paths are drawn with pathLength="1", so no non-scaling-stroke here. */
+.flow__path {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-linecap: butt;
+}
+.flow__head {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Visited points: a hollow mark. The current point: a solid dot in a soft halo (as on Home). */
+.flow__mark {
+  fill: var(--bg);
+  stroke: var(--text);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.flow__dot-core { fill: var(--accent); }
+.flow__dot-halo {
+  fill: var(--accent);
+  opacity: 0.18;
+}
+/* Rings for the searching ping and the arrival burst; over-ons.js plays them, both finite. */
+.flow__dot-pulse,
+.flow__dot-burst {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+}
+.flow__dot--ghost { opacity: 0; }
+
+/* Labels sit in HTML over the SVG, so they keep real type sizes at any width. */
+.flow__axis,
+.flow__zone,
+.flow__pt {
+  position: absolute;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.flow__axis--x { right: 4.6%; top: 92.4%; }
+.flow__axis--y {
+  right: 92.4%;
+  top: 4.6%;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+/* Zone names in Newsreader, sentence case, as in the Home teaser. */
+.flow__zone {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-muted);
+  transition: color var(--dur-base) var(--ease-flow);
+}
+/* Paper knockout so the hatching never runs through the zone names. */
+.flow__zone--stress,
+.flow__zone--boredom {
+  padding: var(--space-4) var(--space-8);
+  background-color: var(--bg);
+}
+.flow__zone--stress { left: calc(13% - var(--space-8)); top: calc(9% - var(--space-4)); }
+.flow__zone--boredom { right: calc(9.4% - var(--space-8)); bottom: calc(12.6% - var(--space-4)); }
+.flow__zone--flow {
+  left: 80%;
+  top: 20%;
+  font-size: var(--text-2xl);
+  font-style: italic;
+  color: var(--accent-text);
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.flow__pt { color: var(--text); }
+.flow__pt--1 { right: 74.4%; top: 73.4%; }
+.flow__pt--4 { left: 64.4%; bottom: 63.4%; }
+/* 02 and 03 sit in the hatched zones, so they get the same paper knockout as the zone names.
+   01 and 04 sit on the channel band, where a paper box would show. */
+.flow__pt--2,
+.flow__pt--3 {
+  padding: 0 var(--space-4);
+  background-color: var(--bg);
+}
+.flow__pt--2 { left: calc(64.4% - var(--space-4)); top: 73.4%; }
+.flow__pt--3 { right: calc(74.4% - var(--space-4)); bottom: 63.4%; }
+
+.flow__caption {
+  margin-top: var(--space-24);
+  color: var(--text-subtle);
+}
+
+/* Steps: a plain numbered list unless the sequence runs. */
+.flow__meter { display: none; }
+.flow__steps {
+  display: grid;
+  gap: var(--space-24);
+  list-style: none;
+}
+.flow__step {
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--border);
+}
+.flow__num {
+  display: block;
+  color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+.flow__title {
+  margin-top: var(--space-8);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-heading);
+}
+.flow__text {
+  margin-top: var(--space-8);
+  max-width: 44ch;
+  color: var(--text-muted);
+}
+
+/* From 600px the zone names match the Flow label and the step titles, so a screen of this
+   section stays at four type sizes. */
+@media (min-width: 600px) {
+  .flow__zone { font-size: var(--text-2xl); }
+}
+@media (min-width: 600px) and (max-width: 959.98px) {
+  .flow__steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-32);
+  }
+}
+@media (min-width: 960px) {
+  .flow {
+    --flow-size: min(560px, 45vw);
+    --flow-between: clamp(var(--space-48), 7vw, var(--space-128));
+  }
+  .flow__stage {
+    grid-template-columns: var(--flow-size) minmax(0, 1fr);
+    column-gap: var(--flow-between);
+    align-items: center;
+  }
+  .flow__figure { max-width: none; }
+  /* Step text at lead size, like the story above it and the pinned captions. */
+  .flow__text { font-size: var(--text-lg); }
+}
+
+/* Pinned, scrubbed sequence (desktop with motion, class set by over-ons.js).
+   The stage pins at its centre, so the figure must fit the viewport below the header. */
+.flow.is-sequenced { --flow-size: min(560px, 45vw, calc(100svh - var(--header-h) - var(--space-128))); }
+.flow.is-sequenced .flow__meter {
+  display: flex;
+  gap: var(--space-8);
+  margin-bottom: var(--space-32);
+}
+.flow__tick {
+  width: var(--space-32);
+  height: 2px;
+  background-color: var(--border);
+  transition: background-color var(--dur-base) var(--ease-flow);
+}
+.flow[data-step="1"] .flow__tick:nth-child(-n+1),
+.flow[data-step="2"] .flow__tick:nth-child(-n+2),
+.flow[data-step="3"] .flow__tick:nth-child(-n+3),
+.flow[data-step="4"] .flow__tick { background-color: var(--accent); }
+
+.flow.is-sequenced .flow__steps { gap: 0; }
+.flow.is-sequenced .flow__step {
+  grid-area: 1 / 1;
+  padding-top: 0;
+  border-top: 0;
+  opacity: 0;
+  transform: translateY(var(--space-16));
+  transition: opacity var(--dur-base) var(--ease-flow), transform var(--dur-slow) var(--ease-flow);
+}
+.flow.is-sequenced .flow__step.is-active {
+  opacity: 1;
+  transform: none;
+  transition-duration: var(--dur-slow);
+  transition-delay: var(--dur-fast);
+}
+.flow.is-sequenced .flow__title {
+  margin-top: var(--space-16);
+  font-size: var(--text-5xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tighter);
+}
+.flow.is-sequenced .flow__text {
+  margin-top: var(--space-24);
+  max-width: 36ch;
+}
+.flow.is-sequenced[data-step="2"] .flow__zone--boredom,
+.flow.is-sequenced[data-step="3"] .flow__zone--stress { color: var(--text); }
+
+/* ---------- Principes ---------- */
+.principles {
+  display: grid;
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+.principle {
+  padding-block: var(--space-32) var(--space-48);
+  border-bottom: 1px solid var(--border);
+}
+.principle__num {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-tighter);
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.principle__title {
+  margin-top: var(--space-32);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-heading);
+}
+.principle__text {
+  margin-top: var(--space-16);
+  max-width: 44ch;
+  color: var(--text-muted);
+}
+/* On phones the titles step down, so the H2 stays clearly the larger heading. */
+@media (max-width: 767px) {
+  .principle__title { font-size: var(--text-2xl); }
+}
+@media (min-width: 768px) {
+  .principles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .principle__title { margin-top: var(--space-48); }
+  .principle:nth-child(odd) { padding-right: var(--space-48); }
+  .principle:nth-child(even) {
+    padding-left: var(--space-48);
+    border-left: 1px solid var(--border);
+  }
+}
+
+/* ---------- Waarom telecom (dark) ---------- */
+/* Same section head as the rest of the page; the body hangs in the 9/12 column. */
+.telecom__statement { max-width: 22em; }
+.telecom__divider { margin-block: var(--space-48); }
+.telecom__lead { max-width: 34rem; }
+
+@media (min-width: 960px) {
+  /* Three tracks, like the Samenwerken columns below: the lead starts on their second line. */
+  .telecom__body {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--space-32);
+  }
+  .telecom__body > * { grid-column: 1 / -1; }
+  .telecom__lead { grid-column: 2 / -1; }
+  .telecom__divider { margin-block: var(--space-64); }
+}
+
+/* ---------- Hoe we samenwerken ---------- */
+.ways {
+  display: grid;
+  gap: var(--space-32);
+  list-style: none;
+}
+.way {
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--rule);
+}
+.way__index {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+.way__title { margin-top: var(--space-32); }
+.way__text {
+  margin-top: var(--space-12);
+  max-width: 40ch;
+  color: var(--text-muted);
+}
+@media (min-width: 768px) {
+  .ways {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--space-32);
+  }
+}

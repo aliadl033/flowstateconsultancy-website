@@ -1,0 +1,339 @@
+/* ==========================================================================
+   Flow State Consultancy · contact.css
+   Contact page: hero with the dark instrument panel, form, next steps, FAQ,
+   company details. Semantic tokens only (see tokens.css).
+   ========================================================================== */
+
+/* ---------- Hero ---------- */
+.contact-hero {
+  --contact-hero-offset: calc(var(--header-h) + var(--space-48));
+  padding-top: var(--contact-hero-offset);
+  padding-bottom: var(--space-section);
+}
+
+.contact-hero__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-48);
+}
+
+.contact-hero__title { margin-top: var(--space-24); }
+.contact-hero__lead { margin-top: var(--space-32); max-width: 40ch; }
+
+/* Direct mail: the fastest route, set apart by a hairline */
+.contact-direct {
+  padding-top: var(--space-24);
+  border-top: 1px solid var(--border);
+}
+.contact-direct__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-16) var(--space-24);
+  margin-top: var(--space-12);
+}
+/* The address is the main tap target on phones: at least 44px tall, centred against the copy button. */
+.contact-direct__mail {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+  text-decoration-line: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  overflow-wrap: anywhere;
+  transition: color var(--dur-fast) var(--ease-flow), text-decoration-thickness var(--dur-fast) var(--ease-flow);
+}
+.contact-direct__mail:hover {
+  color: var(--accent-text);
+  text-decoration-thickness: 2px;
+}
+.contact-direct__copy { --btn-h: 44px; }
+/* Copying needs JavaScript; without it the address link alone is enough. */
+html:not(.js) .contact-direct__copy { display: none; }
+
+@media (min-width: 480px) {
+  .contact-direct__mail { font-size: var(--text-3xl); }
+}
+
+/* Desktop: the mail block sits at the foot of the text column, level with the bottom of the panel.
+   The panel is capped to the first screen (see below), so the address always stays above the fold. */
+@media (min-width: 960px) {
+  .contact-hero { padding-bottom: var(--space-96); }
+  .contact-hero__grid { align-items: stretch; }
+  .contact-hero__text { justify-content: space-between; }
+  .contact-hero__lead { max-width: 52ch; }
+}
+
+/* ---------- Instrument panel ---------- */
+/* The width always comes from the column. Phones get 4/3; tablets a flatter 16/9, so the panel
+   does not fill a whole screen between the hero text and the form. On desktop it is 4/5, but never
+   taller than the first screen minus the hero offset, so the mail block next to it stays in view
+   (short laptop screens get a squarer panel). */
+.contact-scope {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  background-color: var(--scope-bg);
+  color: var(--scope-text);
+}
+@media (min-width: 600px) and (max-width: 959.98px) {
+  .contact-scope { aspect-ratio: 16 / 9; }
+}
+@media (min-width: 960px) {
+  .contact-scope {
+    aspect-ratio: 4 / 5;
+    max-height: calc(100vh - var(--contact-hero-offset) - var(--space-32));
+    max-height: calc(100svh - var(--contact-hero-offset) - var(--space-32));
+  }
+}
+
+.contact-scope__field {
+  position: absolute;
+  inset: 0;
+}
+.contact-scope__field > canvas { animation: contact-scope-in 1.2s var(--ease-flow) both; }
+
+/* Static wave: shown without JavaScript, and when the 3D engine cannot start (contact.js then sets
+   is-static). With JavaScript the panel opens with only its grid and readout and the field fades in,
+   so the still and the 3D field are never on screen together. */
+.contact-scope__still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transition: opacity var(--dur-slow) var(--ease-flow);
+}
+.contact-scope__still path,
+.contact-scope__still ellipse {
+  fill: none;
+  stroke: var(--scope-signal);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.contact-scope__still .contact-scope__ring { opacity: 0.5; }
+.contact-scope__still .contact-scope__ring--2 { opacity: 0.3; }
+.contact-scope__still .contact-scope__ring--3 { opacity: 0.15; }
+.contact-scope__still .contact-scope__node { fill: var(--scope-text); }
+html.js:not(.no-anim) .contact-scope__still,
+.contact-scope.is-live .contact-scope__still { opacity: 0; }
+html.js .contact-scope.is-static .contact-scope__still { opacity: 1; }
+
+/* Graticule: a faint measuring grid with corner ticks, drawn over the field like a scope screen */
+.contact-scope__graticule {
+  --cols: 8;
+  --rows: 6;
+  position: absolute;
+  inset: var(--space-16);
+  z-index: 1;
+  border: 1px solid var(--scope-grid);
+  background-image:
+    linear-gradient(to right, var(--scope-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--scope-grid) 1px, transparent 1px);
+  background-size: calc(100% / var(--cols)) calc(100% / var(--rows));
+  pointer-events: none;
+}
+.contact-scope__graticule::after {
+  --tick: var(--space-16);
+  --tick-color: color-mix(in srgb, var(--scope-text) 45%, transparent);
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background:
+    linear-gradient(var(--tick-color), var(--tick-color)) left top / var(--tick) 1px no-repeat,
+    linear-gradient(var(--tick-color), var(--tick-color)) left top / 1px var(--tick) no-repeat,
+    linear-gradient(var(--tick-color), var(--tick-color)) right top / var(--tick) 1px no-repeat,
+    linear-gradient(var(--tick-color), var(--tick-color)) right top / 1px var(--tick) no-repeat,
+    linear-gradient(var(--tick-color), var(--tick-color)) left bottom / var(--tick) 1px no-repeat,
+    linear-gradient(var(--tick-color), var(--tick-color)) left bottom / 1px var(--tick) no-repeat,
+    linear-gradient(var(--tick-color), var(--tick-color)) right bottom / var(--tick) 1px no-repeat,
+    linear-gradient(var(--tick-color), var(--tick-color)) right bottom / 1px var(--tick) no-repeat;
+}
+@media (min-width: 960px) {
+  .contact-scope__graticule { --rows: 10; }
+}
+
+.contact-scope__readout {
+  position: absolute;
+  top: var(--space-32);
+  left: var(--space-32);
+  z-index: 2;
+}
+/* The readout comes on row by row from the first paint. Pure CSS, so it never blinks when the
+   scripts arrive late. It sits inside the media query because reduced motion in base.css only
+   shortens durations, not delays. */
+@media (prefers-reduced-motion: no-preference) {
+  .contact-scope__readout > * { animation: contact-scope-in 0.5s var(--ease-flow) both; }
+  .contact-scope__readout > :nth-child(1) { animation-delay: 0.5s; }
+  .contact-scope__readout > :nth-child(2) { animation-delay: 0.57s; }
+  .contact-scope__readout > :nth-child(3) { animation-delay: 0.64s; }
+  .contact-scope__readout > :nth-child(4) { animation-delay: 0.71s; }
+  .contact-scope__readout > :nth-child(5) { animation-delay: 0.78s; }
+  .contact-scope__readout > :nth-child(6) { animation-delay: 0.85s; }
+}
+
+@keyframes contact-scope-in { from { opacity: 0; } }
+
+/* ---------- Form ---------- */
+.contact-form-section { border-top: 1px solid var(--border); }
+/* One readable column: short fields stay short and the message wraps at a comfortable measure. */
+.contact-form { max-width: var(--measure); }
+
+.contact-form-intro > * + * { margin-top: var(--space-24); }
+.contact-form-intro .display { margin-bottom: var(--space-32); }
+.contact-form-intro__privacy {
+  max-width: 36ch;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+@media (min-width: 960px) {
+  .contact-form-intro {
+    position: sticky;
+    top: calc(var(--header-h) + var(--space-32));
+    align-self: start;
+  }
+}
+
+.contact-form__actions {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-16);
+  margin-top: var(--space-8);
+}
+.contact-form__actions .form-note { max-width: 44ch; }
+/* After sending, the status message takes the place of the explanation, which says the same thing. */
+.contact-form.is-sent .contact-form__actions > .form-note { display: none; }
+/* The status region stays rendered (empty) so screen readers pick up the message when it arrives. */
+.contact-form__status { width: 100%; }
+.contact-form__status-box { margin-top: var(--space-8); }
+.contact-form__status-box .icon { margin-top: 2px; color: var(--accent-text); }
+.contact-form__status-box p { max-width: 52ch; text-wrap: pretty; }
+
+/* ---------- Wat er na je bericht gebeurt ---------- */
+.contact-steps { background-color: var(--bg-subtle); }
+.contact-steps__title { max-width: 16ch; }
+
+.contact-steps__list {
+  display: grid;
+  gap: var(--space-48);
+  margin-top: var(--space-64);
+  list-style: none;
+}
+.contact-steps__item { position: relative; }
+
+.contact-steps__marker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+.contact-steps__marker .index { color: var(--text); }
+.contact-steps__line {
+  display: block;
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-strong);
+  transform-origin: left center;
+}
+.contact-steps__item:last-child .contact-steps__line { display: none; }
+
+.contact-steps__name { margin-top: var(--space-24); }
+.contact-steps__text {
+  margin-top: var(--space-8);
+  max-width: 34ch;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+@media (min-width: 960px) {
+  .contact-steps__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--space-48);
+  }
+  /* The line runs on through the column gap and stops just before the next number. */
+  .contact-steps__line {
+    --contact-line-overhang: calc(-1 * var(--space-32));
+    margin-right: var(--contact-line-overhang);
+  }
+}
+
+/* Below 960px the steps stack and the line runs down the left, from number to number. */
+@media (max-width: 959.98px) {
+  .contact-steps__item {
+    display: grid;
+    grid-template-columns: var(--space-48) minmax(0, 1fr);
+    align-items: start;
+  }
+  .contact-steps__marker {
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8);
+  }
+  .contact-steps__line {
+    --contact-line-overhang: calc(var(--space-8) - var(--space-48));
+    width: 1px;
+    height: auto;
+    margin-left: var(--space-8);
+    margin-bottom: var(--contact-line-overhang);
+    transform-origin: center top;
+  }
+  .contact-steps__name { margin-top: 0; }
+}
+
+/* ---------- FAQ ---------- */
+.contact-faq__title { max-width: 12ch; }
+
+/* ---------- Bedrijfsgegevens ---------- */
+/* A quiet appendix: the heading is a step below the display titles of the sections above it. */
+.contact-company { padding-top: 0; }
+.contact-company__title { font-size: var(--text-4xl); }
+.contact-company__card { padding: var(--space-24); }
+
+.contact-company__list { display: grid; }
+.contact-company__row {
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-16);
+  border-top: 1px solid var(--border);
+}
+.contact-company__row:first-child { padding-top: 0; border-top: 0; }
+.contact-company__row:last-child { padding-bottom: 0; }
+.contact-company__row dt {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.34;
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.contact-company__row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+/* Vertical padding on the inline link gives it a 44px hit area without changing the row height. */
+.contact-company__row dd a { padding-block: var(--space-12); }
+
+@media (min-width: 600px) {
+  .contact-company__card { padding: var(--space-32); }
+  .contact-company__row {
+    grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
+    column-gap: var(--space-24);
+    align-items: baseline;
+  }
+}
+/* Side by side, the heading lines up with the first row inside the card. */
+@media (min-width: 960px) {
+  .contact-company__title { padding-top: var(--space-32); }
+}

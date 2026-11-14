@@ -1,0 +1,168 @@
+# Builds the blog, runs every check and publishes site/ to GitHub Pages, then tells IndexNow which pages changed.
+# Pull requests to main only build and check, so a branch can be merged once it is green.
+# A failed deploy opens (or updates) an issue, which GitHub e-mails to the repository owner.
+# Settings > Pages > Source must be "GitHub Actions".
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      indexnow_all:
+        description: After deploying, send every URL in the sitemap to IndexNow (use once when the domain goes live)
+        type: boolean
+        default: false
+
+# Least privilege: every job asks only for what it needs.
+permissions:
+  contents: read
+
+# One deployment at a time, never cancelled halfway. Pull requests get their own group.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build and check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository with full history (sitemap dates come from git)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test the blog tooling
+        run: npm test
+
+      - name: Build the blog, sitemap and feed
+        run: npm run build
+
+      - name: Run the checks
+        run: npm run check
+
+      - name: Remove development-only files
+        if: github.event_name != 'pull_request'
+        run: rm -rf site/_*
+
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v6
+
+      - name: Upload the site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  indexnow:
+    name: Notify IndexNow
+    if: github.event_name != 'pull_request'
+    needs: deploy
+    runs-on: ubuntu-latest
+    # A failed notification never marks a good deploy as failed.
+    continue-on-error: true
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Check out the repository with full history (to see what changed)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild the sitemap (only URLs in the sitemap are sent)
+        run: npm run build
+
+      - name: Submit the URLs changed since the last successful deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          SUBMIT_ALL: ${{ inputs.indexnow_all }}
+        run: |
+          if [ "$SUBMIT_ALL" = "true" ]; then
+            node tools/indexnow.mjs --all
+            exit 0
+          fi
+          # Compare with the commit of the last successful run, not only with the previous push: a run that GitHub
+          # replaced while it waited in the queue, or one that failed, would otherwise never send its URLs.
+          LAST=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow deploy.yml --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // empty' 2>/dev/null || true)
+          FROM="${LAST:-$BEFORE}"
+          if [ -n "$FROM" ] && ! git cat-file -e "${FROM}^{commit}" 2>/dev/null; then FROM="$BEFORE"; fi
+          echo "Submitting pages changed between ${FROM:-(unknown)} and $AFTER"
+          node tools/indexnow.mjs --changed "$FROM" "$AFTER"
+
+  report:
+    name: Report the deploy result
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    # The run's result is the deploy's result; a reporting problem (for example issues switched off) never changes it.
+    continue-on-error: true
+    permissions:
+      issues: write
+    steps:
+      - name: Open, update or close the issue about a failed deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD: ${{ needs.build.result }}
+          DEPLOY: ${{ needs.deploy.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ "$BUILD" = "cancelled" ] || [ "$DEPLOY" = "cancelled" ]; then
+            echo "The run was cancelled; nothing to report."
+            exit 0
+          fi
+          TITLE="Deploy mislukt: de website is niet bijgewerkt"
+          OPEN=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if [ "$BUILD" = "success" ] && [ "$DEPLOY" = "success" ]; then
+            if [ -n "$OPEN" ]; then
+              gh issue close "$OPEN" --repo "$GITHUB_REPOSITORY" --comment "De deploy van commit $SHA is gelukt. De website is weer bijgewerkt: $RUN_URL"
+            fi
+            exit 0
+          fi
+          BODY=$(printf 'De workflow Deploy site is mislukt voor commit %s.\n\nBekijk de fout hier: %s\n\nZolang dit issue openstaat, publiceert de blogroutine geen nieuwe artikelen. Los de fout op en push naar main. Dit issue sluit vanzelf zodra een deploy weer lukt.' "$SHA" "$RUN_URL")
+          if [ -n "$OPEN" ]; then
+            gh issue comment "$OPEN" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi

@@ -1,0 +1,225 @@
+/* ==========================================================================
+   Flow State Consultancy · legal.css
+   Readable legal pages (privacy.html): a document axis with the meta and the
+   table of contents on the left, numbered sections on the right.
+   Every rule is scoped to .legal-* classes. Semantic tokens only (tokens.css).
+   ========================================================================== */
+
+/* Two-column document grid, aligned with the .section-head grid used on the other pages */
+.legal-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* a long word never widens the column past the screen */
+  row-gap: var(--space-24);
+}
+@media (min-width: 960px) {
+  .legal-grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    column-gap: var(--space-24);
+    align-items: start;
+  }
+}
+
+/* ---------- Hero ---------- */
+.legal-hero {
+  /* room under the fixed header; kept in a property so the value stays one token expression */
+  --legal-top: calc(var(--header-h) + var(--space-48));
+  padding-top: var(--legal-top);
+}
+@media (min-width: 960px) {
+  .legal-hero { --legal-top: calc(var(--header-h) + var(--space-96)); }
+  .legal-hero__meta { padding-top: var(--space-16); }
+}
+.legal-hero__date {
+  margin-top: var(--space-16);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.34;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* The intro as a serif standfirst */
+.legal-hero__lead {
+  margin-top: var(--space-32);
+  max-width: 44ch;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+.legal-hero__signal { margin-top: var(--space-64); }
+
+/* ---------- Body ---------- */
+.legal-main {
+  padding-top: var(--space-64);
+  padding-bottom: var(--space-section);
+  row-gap: var(--space-64);
+}
+@media (min-width: 960px) {
+  .legal-main { padding-top: var(--space-96); }
+}
+
+/* Table of contents: numbered links, sticky beside the text on roomy screens */
+.legal-toc {
+  padding-top: var(--space-24);
+  border-top: 1px solid var(--rule);
+}
+.legal-toc__label { margin-bottom: var(--space-16); }
+.legal-toc__list {
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+.legal-toc__link {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-16);
+  min-height: 44px;
+  padding-block: var(--space-8);
+  padding-right: var(--space-16);
+  border-bottom: 1px solid var(--border);
+  line-height: var(--leading-body);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-flow);
+}
+.legal-toc__num {
+  flex: none;
+  min-width: var(--space-24);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--dur-fast) var(--ease-flow);
+}
+@media (hover: hover) {
+  .legal-toc__link:hover { color: var(--text); }
+  .legal-toc__link:hover .legal-toc__num { color: var(--accent-text); }
+}
+/* The section being read (set by legal.js) */
+.legal-toc__link.is-active { color: var(--text); }
+.legal-toc__link.is-active .legal-toc__num { color: var(--accent-text); }
+
+/* Tablet: two columns that read down, 01 to 06 then 07 to 12 */
+@media (min-width: 600px) and (max-width: 959.98px) {
+  .legal-toc__list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(6, auto);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-24);
+  }
+}
+@media (min-width: 960px) and (min-height: 720px) {
+  .legal-toc {
+    position: sticky;
+    top: calc(var(--header-h) + var(--space-32));
+  }
+  /* In a narrow column the titles wrap and the list can outgrow the screen. It then scrolls on its
+     own, so every entry stays reachable while the rule and the label stay in place.
+     Height: the screen minus the sticky top, the label above the list and a bottom margin of 32px.
+     The 4px padding (cancelled by the negative margin) leaves room for the focus ring, which the
+     scrolling box would otherwise clip; the top rule moves onto the first link for the same reason. */
+  .legal-toc__list {
+    max-height: calc(100vh - var(--header-h) - var(--space-96) - var(--space-16));
+    max-height: calc(100svh - var(--header-h) - var(--space-96) - var(--space-16));
+    margin: calc(var(--space-4) * -1);
+    padding: var(--space-4);
+    border-top: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding-block: var(--space-4);
+    scrollbar-width: thin;
+  }
+  .legal-toc__list > li:first-child > .legal-toc__link { border-top: 1px solid var(--border); }
+}
+
+/* Numbered sections with a hanging index */
+.legal-body { max-width: calc(var(--measure) + var(--space-48)); }
+.legal-section {
+  /* an in-page jump lands the rule of a section on the line of the sticky table of contents */
+  scroll-margin-top: var(--space-16);
+  padding-top: var(--space-24);
+  border-top: 1px solid var(--border);
+}
+.legal-section:first-child { border-top-color: var(--rule); }
+.legal-section + .legal-section { margin-top: var(--space-48); }
+.legal-section__title {
+  display: grid;
+  grid-template-columns: var(--space-32) minmax(0, 1fr);
+  align-items: baseline;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-heading);
+}
+.legal-section__num {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+.legal-section__text {
+  margin-top: var(--space-16);
+  padding-left: var(--space-32);
+  /* long addresses (e-mail, autoriteitpersoonsgegevens.nl) only break when they cannot fit */
+  overflow-wrap: anywhere;
+}
+@media (min-width: 960px) {
+  .legal-section__title { grid-template-columns: var(--space-48) minmax(0, 1fr); }
+  .legal-section__text { padding-left: var(--space-48); }
+}
+
+/* Compounds with a hyphen (e-mailadres, IP-adres) stay on one line */
+.legal-nowrap { white-space: nowrap; }
+
+/* Lists with small signal dots */
+.legal-section__text .legal-list {
+  list-style: none;
+  padding-left: 0;
+}
+.legal-list li {
+  position: relative;
+  padding-left: var(--space-24);
+}
+.legal-list li::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: calc(0.8em - 3px);
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-round);
+  background-color: var(--accent);
+}
+
+/* Company details as a small definition list */
+.legal-facts {
+  display: grid;
+  border-top: 1px solid var(--border);
+}
+.legal-facts__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-4);
+  padding-block: var(--space-12);
+  border-bottom: 1px solid var(--border);
+}
+@media (min-width: 600px) {
+  .legal-facts__row {
+    grid-template-columns: var(--space-96) minmax(0, 1fr);
+    column-gap: var(--space-16);
+    align-items: baseline;
+  }
+}
+.legal-facts dt {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.34;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.legal-facts dd { margin: 0; }
