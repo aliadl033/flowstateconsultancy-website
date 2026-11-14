@@ -8,7 +8,7 @@ Signaal is de blog op flowstateconsultancy.nl/blog/. Elke drie dagen schrijft ee
 2. Eerst draait `node automation/preflight.mjs`. Die controleert of alles klaarstaat: de tools, de laatste deploy, of het nieuwste artikel echt online staat, en of er nog een blogbranch op je wacht. Klopt er iets niet, dan schrijft de routine niets en stopt.
 3. De SEO-strateeg zoekt een actueel onderwerp met betrouwbare bronnen. De schrijver maakt het artikel, de strateeg leest het na.
 4. `npm run build` en `npm run check` controleren het artikel: lengte, bronnen, links, trefwoorden, schrijfregels en de technische SEO.
-5. De routine pusht naar `main`. Mag dat niet in haar omgeving, dan pusht ze een branch `claude/blog-<slug>`. De workflow "Publish blog branch" controleert die branch en zet hem op `main`.
+5. De routine pusht een branch `claude/blog-<slug>`. De workflow "Publish blog branch" controleert die branch, bouwt en test alles opnieuw en zet hem pas daarna op `main`. Zo gaat elk artikel door dezelfde controle.
 6. De workflow "Deploy site" bouwt de site, zet hem op GitHub Pages en meldt de nieuwe pagina's bij IndexNow (Bing en andere zoekmachines). Google vindt ze via de sitemap.
 
 Gaat er op GitHub iets mis, dan opent een workflow een issue in je repository. GitHub mailt je daarover.
@@ -18,7 +18,7 @@ Gaat er op GitHub iets mis, dan opent een workflow een issue in je repository. G
 * GitHub, Settings > Pages: zet Source op "GitHub Actions" en vul je domein in bij Custom domain. Zet "Enforce HTTPS" aan zodra dat kan.
 * GitHub, Settings > Rules (of Branches): bescherm `main` tegen force pushes en tegen verwijderen. Zet er geen regel op die een pull request verplicht maakt, want dan kunnen de routine en de workflow niet publiceren.
 * GitHub, Settings > Actions > General: laat Actions toe voor deze repository. De workflows vragen zelf de rechten die ze nodig hebben.
-* De routine in Claude Code: koppel deze repository en laat de routine elke drie dagen draaien met als opdracht `Volg automation/ROUTINE.md`. Geef de omgeving volledige netwerktoegang, of minstens toegang tot registry.npmjs.org, github.com, api.github.com, je eigen domein en het open web voor het bronnenonderzoek. Sta pushen naar `main` toe als die optie er is. Zonder die optie werkt het ook, via de blogbranch.
+* De routine in Claude Code: koppel deze repository en laat de routine elke drie dagen draaien met als opdracht `Volg automation/ROUTINE.md`. Geef de omgeving volledige netwerktoegang, of minstens toegang tot registry.npmjs.org, github.com, api.github.com, je eigen domein en het open web voor het bronnenonderzoek. De routine pusht alleen naar `claude/`-branches; extra pushrechten zijn niet nodig.
 
 ## De routine stilleggen
 

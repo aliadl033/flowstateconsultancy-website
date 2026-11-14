@@ -26,13 +26,13 @@ Instructions for the scheduled cloud agent that publishes one post on Signaal, t
 * Only you (the main agent) run git commands. The subagents never run git or gh.
 * Never use `git push --force`, `--force-with-lease`, `--no-verify`, `gh pr merge --admin`, `git reset --hard` on anything that was pushed, or any command that rewrites or deletes history on GitHub.
 * Never change repository settings, branch protection, rulesets, secrets, workflows or GitHub Pages settings. Never delete a branch you did not create in this run.
-* When a push is rejected, follow section 7 exactly. When that does not work, stop and report (section 10). A stranded branch is safe; a forced push can erase other people's work.
+* Push only to a new `claude/blog-...` branch (section 7), never to `main`. When a push is refused, follow section 7 exactly. When that does not work, stop and report (section 10). A stranded branch is safe; a forced push can erase other people's work.
 
 ## 1. Environment and preflight
 
 What this routine needs (whoever sets it up, see `automation/LEESMIJ.md`; the preflight checks it on every run):
 
-* The repository attached with push access. Best: pushing to `main` is allowed for this routine (unrestricted branch pushes). If the environment only allows `claude/` branches, the routine pushes `claude/blog-<slug>` and the workflow `.github/workflows/blog-publish.yml` checks it and moves `main` forward.
+* The repository attached with push access to `claude/` branches (the default for routines). The routine pushes `claude/blog-<slug>`; the workflow `.github/workflows/blog-publish.yml` checks it and moves `main` forward.
 * Outbound network access to `registry.npmjs.org` (npm ci), `github.com` and `api.github.com`, the site's own domain, and the open web for research (WebSearch and WebFetch on Dutch news and government sites).
 * Node 20 or newer with npm, python3 and git. The GitHub CLI `gh` is optional.
 
@@ -93,6 +93,8 @@ Problems in the environment or the site (a preflight stop, a check that fails be
 
 ## 7. Commit and push
 
+Every post goes live through one tested path: you push a blog branch, and the workflow "Publish blog branch" (`.github/workflows/blog-publish.yml`) checks it, rebuilds, runs every test and check, moves `main` forward and starts the deploy. Never push to `main` yourself.
+
 1. If git has no identity yet, use name `Signaal blog agent` and the e-mail address in `tools/site.config.json` (`organization.email`).
 2. Stage only the files from section 0, for example:
 
@@ -102,24 +104,14 @@ Problems in the environment or the site (a preflight stop, a check that fails be
 
    Run `git diff --cached --stat` and check that nothing outside section 0 is staged. In `site/index.html` only the lines between the blog markers may change.
 3. Commit with the message `Blog: <title>` (for a skipped run: `Blog: log <date>`).
-4. Push to main: `git push origin HEAD:main`. If it succeeds, continue at section 8.
-5. Rejected because main moved (the message says "rejected", "non-fast-forward" or "fetch first"):
-
-   ```
-   git fetch origin main
-   git rebase origin/main
-   ```
-
-   If the rebase stops on a conflict: for generated files (`site/blog/`, `site/sitemap.xml`, `site/feed.xml`, `site/robots.txt`, `site/index.html`) take the version of main with `git checkout --ours -- <file>` (during a rebase "ours" is main), because the next build regenerates them. In `automation/log.md` keep every line of main and put your line last. Then `git add <file>` and `git rebase --continue`.
-   Run `npm run build` and `npm run check` again: this also catches a post that arrived meanwhile with the same primary keyword (fix that in your post, or skip it). Stage the regenerated files, run `git commit --amend --no-edit` (allowed: this commit was never pushed) and push once more with `git push origin HEAD:main`. If that is rejected again, stop (section 10).
-6. Refused because this environment may not push to main (the message mentions permission, 403, "denied", "protected" or a restriction to `claude/` branches): push the same commit to a blog branch instead:
+4. Push the commit to a new blog branch:
 
    ```
    git push origin HEAD:refs/heads/claude/blog-<slug>
    ```
 
-   (for a log-only run: `claude/blog-log-<date>`). The workflow "Publish blog branch" checks that only blog files changed, rebuilds, runs every test and check, moves main forward and starts the deploy, usually within five minutes. Wait for it: every 60 seconds run `git fetch origin main` and test `git cat-file -e origin/main:content/blog/<slug>/meta.json` (for a log-only run: `git show origin/main:automation/log.md | grep -F "<your log line>"`), for at most 20 minutes. When it arrives, continue at section 8. When it does not, leave the branch alone (the workflow opened an issue for the owner, and the next run's preflight stops until a person has handled it) and stop (section 10).
-7. If `gh` is logged in and the workflow is not available, you may open a pull request for the blog branch with `gh pr create --base main --fill` and enable auto-merge with `gh pr merge --auto --squash` (or `--merge` when squash merges are not allowed). Never merge with `--admin`.
+   (for a log-only run: `claude/blog-log-<date>`). If the push is refused, try it once more after 30 seconds; if it is refused again, stop (section 10) and quote the message.
+5. Wait for the workflow, usually three to five minutes: every 60 seconds run `git fetch origin main` and test `git cat-file -e origin/main:content/blog/<slug>/meta.json` (for a log-only run: `git show origin/main:automation/log.md | grep -F "<your log line>"`), for at most 20 minutes. When it arrives, continue at section 8. When it does not, leave the branch alone (the workflow opened an issue for the owner, and the next run's preflight stops until a person has handled it) and stop (section 10).
 
 ## 8. Verify the deploy
 
@@ -142,7 +134,7 @@ End every run with a short summary in plain text:
 ```
 Outcome: published | skipped | stopped | failed
 Post: <title> (https://flowstateconsultancy.nl/blog/<slug>.html) or none
-Pushed to: main | claude/blog-<slug> | nothing
+Pushed to: claude/blog-<slug> | nothing
 Deploy: live | not live after 15 minutes | failed | not checked
 Reason and next step for a person: <only when something did not go live>
 ```
