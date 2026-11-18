@@ -478,6 +478,22 @@ if (posts.length) {
   }
 }
 
+/* ---------- Contact form ---------- */
+
+// The contact form posts to Formspark. A missing or placeholder endpoint would only show when a
+// visitor presses send, so it blocks here instead. Set it with: node dev/set-formspark.mjs <form-id>
+const contactFile = path.join(SITE_DIR, 'contact.html');
+if (fs.existsSync(contactFile)) {
+  const form = tags(readText(contactFile), 'form').find((t) => /\sdata-contact-form\b/i.test(t));
+  const action = form ? attr(form, 'action') || '' : '';
+  if (!form) problem('site/contact.html', 'the contact form (data-contact-form) is missing');
+  else if (!/^https:\/\/submit-form\.com\/[A-Za-z0-9_-]+$/.test(action) || /FORMULIER-ID/.test(action)) {
+    problem('site/contact.html', `the contact form posts to "${action}", not to a Formspark form; run node dev/set-formspark.mjs <form-id>`);
+  } else if ((attr(form, 'method') || '').toLowerCase() !== 'post') {
+    problem('site/contact.html', 'the contact form needs method="post"');
+  }
+}
+
 /* ---------- Report ---------- */
 
 console.log(`Checked ${blogPagesChecked} blog page(s), ${posts.length} post(s), ${staticFiles.length} static page(s), sitemap (${sitemapCount} URLs), feed (${feedCount} items).`);

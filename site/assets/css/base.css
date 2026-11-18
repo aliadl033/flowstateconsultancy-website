@@ -810,6 +810,8 @@ html.js:not(.no-anim) [data-reveal="draw"] { clip-path: inset(0 100% 0 0); }
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
+  /* A frozen spinner looks like a hang, so the loading ring pulses instead of turning. */
+  .btn.is-loading::after { animation: fs-blink 0.9s ease-in-out infinite alternate !important; }
 }
 
 @keyframes fs-spin { to { transform: rotate(360deg); } }

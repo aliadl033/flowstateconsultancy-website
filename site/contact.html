@@ -142,7 +142,7 @@
             <p class="contact-form-intro__privacy">We gebruiken je gegevens alleen om op je bericht te reageren. <a class="text-link" href="/privacy.html">Lees de privacyverklaring</a>.</p>
           </div>
 
-          <form class="form contact-form" aria-labelledby="form-title" data-contact-form data-mailto="ali@flowstateconsultancy.nl" data-mail-subject="Kennismaking via de website: ">
+          <form class="form contact-form" aria-labelledby="form-title" action="https://submit-form.com/FORMULIER-ID" method="post" data-contact-form data-mailto="ali@flowstateconsultancy.nl">
             <div class="field">
               <label class="field__label" for="cf-naam">Naam<span class="field__req" aria-hidden="true">*</span></label>
               <input class="field__input" id="cf-naam" name="naam" type="text" autocomplete="name" autocapitalize="words" placeholder="Voornaam Achternaam" required data-validate="required" data-msg-required="Vul je naam in.">
@@ -170,6 +170,7 @@
               <label class="field__label" for="cf-onderwerp">Onderwerp</label>
               <div class="field__select">
                 <select class="field__input" id="cf-onderwerp" name="onderwerp">
+                  <option value="">Kies een onderwerp</option>
                   <option>Salestraining</option>
                   <option>Coaching op de vloer</option>
                   <option>Gespreksanalyse</option>
@@ -185,20 +186,41 @@
               <p class="field__error" id="cf-bericht-error" hidden><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span data-error-text></span></p>
             </div>
 
+            <div class="contact-form__trap" hidden>
+              <label for="cf-gotcha">Laat dit veld leeg</label>
+              <input id="cf-gotcha" name="_gotcha" type="text" tabindex="-1" autocomplete="off">
+            </div>
+            <input type="hidden" name="_email.subject" value="Kennismaking via de website">
+            <input type="hidden" name="_email.from" value="Website Flow State Consultancy">
+            <input type="hidden" name="_language" value="nl">
+            <input type="hidden" name="_feedback.success.title" value="Je bericht is verstuurd.">
+            <input type="hidden" name="_feedback.success.message" value="We mailen je zo snel mogelijk terug op het adres dat je hebt ingevuld.">
+
             <div class="contact-form__actions">
               <button class="btn btn--primary btn--lg contact-form__submit" type="submit"><span>Verstuur bericht</span><svg class="icon icon--move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
-              <p class="form-note">Na verzenden opent je mailprogramma met je bericht erin. Je hoeft de mail dan alleen nog te versturen.</p>
-              <noscript><p class="form-note">Dit formulier werkt alleen met JavaScript. Mail ons direct op <a class="text-link" href="mailto:ali@flowstateconsultancy.nl">ali@flowstateconsultancy.nl</a>.</p></noscript>
+              <p class="form-note">Je bericht komt via onze formulierdienst Formspark direct in onze mailbox.</p>
+              <noscript><p class="form-note">Zonder JavaScript kom je na het versturen op een pagina van Formspark.</p></noscript>
               <div class="contact-form__status" role="status" aria-live="polite" data-form-status></div>
             </div>
           </form>
         </div>
       </div>
 
-      <template id="contact-status-template">
-        <div class="form-status contact-form__status-box">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-          <p>Je mailprogramma opent nu met je bericht. Verstuur de mail om het af te ronden. Opent er niets, mail dan naar <a class="text-link" href="mailto:ali@flowstateconsultancy.nl">ali@flowstateconsultancy.nl</a>.</p>
+      <template id="contact-status-sending">
+        <p class="visually-hidden">Bezig met versturen.</p>
+      </template>
+
+      <template id="contact-status-sent">
+        <div class="form-status form-status--success contact-form__status-box">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          <p>Je bericht is verstuurd. We mailen je zo snel mogelijk terug op <span class="contact-form__sent-to" data-status-email>het adres dat je hebt ingevuld</span>.</p>
+        </div>
+      </template>
+
+      <template id="contact-status-failed">
+        <div class="form-status form-status--error contact-form__status-box">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+          <p>Je bericht is niet verstuurd. Probeer het nog een keer, of mail het naar <a class="text-link" href="mailto:ali@flowstateconsultancy.nl" data-mailto-link>ali@flowstateconsultancy.nl</a>.</p>
         </div>
       </template>
     </section>

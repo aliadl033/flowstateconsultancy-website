@@ -1,13 +1,17 @@
 /* Flow State Consultancy · contact.js
    Contact page module: the calm signal field in the instrument panel, the contact form
-   (custom validation, then a mailto hand-off), the line through the next steps and a smooth FAQ.
+   (custom validation, then a JSON POST to Formspark with a mailto fallback when that fails), the line
+   through the next steps and a smooth FAQ.
    All copy (messages, mail address, subject) lives in contact.html, so a search and replace
    over the HTML files is enough to change it. The readout intro of the panel is pure CSS. */
 
 import { gsap, ScrollTrigger, lenis, reducedMotion, onReady } from './core.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const LOADING_MS = 600;
+// Only a real Formspark form endpoint counts; npm run check blocks a deploy without one.
+const FORMSPARK_ENDPOINT = /^https:\/\/submit-form\.com\/[A-Za-z0-9_-]+$/;
+const MIN_BUSY_MS = 600; // the spinner shows at least this long, so a fast answer does not flicker
+const TIMEOUT_MS = 15000;
 const STILL_AFTER_MS = 2500;
 
 /* ---------- 3D field (calm mode), loaded on demand so the page works without it ---------- */
@@ -37,13 +41,19 @@ function initForm(form) {
   // Custom validation takes over from the browser only when this module runs.
   form.setAttribute('novalidate', '');
 
+  const action = form.getAttribute('action') || '';
+  const endpoint = FORMSPARK_ENDPOINT.test(action) ? action : '';
   const address = form.dataset.mailto || '';
-  const subjectPrefix = form.dataset.mailSubject || '';
   const submit = form.querySelector('[type="submit"]');
   const statusRegion = form.querySelector('[data-form-status]');
-  const statusTemplate = document.getElementById('contact-status-template');
+  const statusTemplates = {
+    sending: document.getElementById('contact-status-sending'),
+    sent: document.getElementById('contact-status-sent'),
+    failed: document.getElementById('contact-status-failed'),
+  };
   const header = document.querySelector('[data-site-header]');
   let busy = false;
+  let statusTimer = 0;
 
   const fields = [...form.querySelectorAll('[data-validate]')].map((input) => {
     const error = document.getElementById(`${input.id}-error`);
@@ -93,18 +103,31 @@ function initForm(form) {
     });
   });
 
+  const headerOffset = () => (header ? header.offsetHeight : 0) + 24;
+  const scrollToY = (y) => {
+    const top = Math.max(0, y);
+    if (lenis) lenis.scrollTo(top, reducedMotion ? { immediate: true } : { duration: 0.9 });
+    else window.scrollTo({ top, behavior: reducedMotion ? 'auto' : 'smooth' });
+  };
+
   // Focus the field and, if needed, bring it (label included) into view below the fixed header.
   // The target is measured from the real scroll position, so it is right even mid-scroll.
   const focusField = (input) => {
     const wrap = input.closest('.field') || input;
     const rect = wrap.getBoundingClientRect();
-    const offset = (header ? header.offsetHeight : 0) + 24;
-    const inView = rect.top >= offset && rect.bottom <= window.innerHeight;
+    const offset = headerOffset();
     input.focus({ preventScroll: true });
-    if (inView) return;
-    const y = Math.max(0, rect.top + window.scrollY - offset);
-    if (lenis) lenis.scrollTo(y, { duration: 0.9 });
-    else window.scrollTo({ top: y, behavior: reducedMotion ? 'auto' : 'smooth' });
+    if (rect.top >= offset && rect.bottom <= window.innerHeight) return;
+    scrollToY(rect.top + window.scrollY - offset);
+  };
+
+  // A status message that lands outside the screen (on a phone the button sits low) scrolls into
+  // view. Focus stays where it is; screen readers get the message through the live region.
+  const reveal = (box) => {
+    const rect = box.getBoundingClientRect();
+    const offset = headerOffset();
+    if (rect.bottom > window.innerHeight - 24) scrollToY(rect.bottom + window.scrollY - window.innerHeight + 24);
+    else if (rect.top < offset) scrollToY(rect.top + window.scrollY - offset);
   };
 
   const valueOf = (name) => {
@@ -112,17 +135,9 @@ function initForm(form) {
     return el && 'value' in el ? String(el.value).trim() : '';
   };
 
-  // The select starts on its first option. The topic only goes into the mail once the visitor has
-  // picked one (or the browser restored another option), so nobody is filed under the first topic
-  // just because they skipped the field.
-  const topic = form.elements.namedItem('onderwerp');
-  let topicPicked = false;
-  if (topic && topic.options) topic.addEventListener('change', () => { topicPicked = true; });
-  const topicValue = () => {
-    if (!topic || !topic.options || !topic.options.length) return '';
-    const initial = [...topic.options].find((option) => option.defaultSelected) || topic.options[0];
-    return topicPicked || topic.value !== initial.value ? String(topic.value).trim() : '';
-  };
+  // The select opens on "Kies een onderwerp" with an empty value, so only a topic the visitor
+  // actually picked ends up in the mail.
+  const topicValue = () => valueOf('onderwerp');
 
   // The label text without the required marker, so the mail uses the same words as the form.
   const labelOf = (name) => {
@@ -136,34 +151,101 @@ function initForm(form) {
       .trim();
   };
 
+  // The base subject sits in the hidden field _email.subject, which also serves the form without
+  // JavaScript. With a topic: "Kennismaking via de website: Gespreksanalyse".
+  const subjectBase = valueOf('_email.subject');
+  const subjectFor = (chosenTopic) => [subjectBase, chosenTopic].filter(Boolean).join(': ');
+
+  // The same message as a ready-made mail: the way out when the form cannot reach Formspark.
   const buildMailto = () => {
-    const chosenTopic = topicValue();
     const lines = [];
     ['naam', 'bedrijf', 'email', 'telefoon', 'onderwerp'].forEach((name) => {
-      const value = name === 'onderwerp' ? chosenTopic : valueOf(name);
+      const value = valueOf(name);
       if (value) lines.push(`${labelOf(name)}: ${value}`);
     });
     lines.push('', ...valueOf('bericht').split(/\r\n|\r|\n/));
     const body = lines.map((line) => encodeURIComponent(line)).join('%0D%0A');
-    // "Kennismaking via de website: Gespreksanalyse", or the prefix on its own when no topic was picked.
-    const subject = chosenTopic ? subjectPrefix + chosenTopic : subjectPrefix.replace(/[\s:]+$/, '');
-    return `mailto:${address}?subject=${encodeURIComponent(subject)}&body=${body}`;
+    return `mailto:${address}?subject=${encodeURIComponent(subjectFor(topicValue()))}&body=${body}`;
   };
 
-  const showStatus = () => {
-    if (!statusRegion || !statusTemplate) return;
+  // What Formspark receives, as JSON: the trimmed fields in form order without the ones left empty,
+  // the honeypot as it is (bots fill it, people never see it) and the settings of the notification
+  // mail from the hidden _email.* fields. Formspark uses the field "email" as the reply-to address.
+  const buildPayload = () => {
+    const payload = {};
+    ['naam', 'bedrijf', 'email', 'telefoon', 'onderwerp', 'bericht'].forEach((name) => {
+      const value = valueOf(name);
+      if (value) payload[name] = value;
+    });
+    const trap = form.elements.namedItem('_gotcha');
+    payload._gotcha = trap && 'value' in trap ? String(trap.value) : '';
+    form.querySelectorAll('input[type="hidden"][name^="_email."]').forEach((input) => {
+      if (input.value) payload[input.name] = input.value;
+    });
+    payload['_email.subject'] = subjectFor(topicValue());
+    return JSON.stringify(payload);
+  };
+
+  // Resolves to 'sent' or 'failed' and never throws. Failed covers offline, no answer within
+  // TIMEOUT_MS, the spam filter (403) and a used-up submission bundle (402).
+  const send = async (body) => {
+    if (!endpoint || typeof window.fetch !== 'function') return 'failed';
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = controller ? window.setTimeout(() => controller.abort(), TIMEOUT_MS) : 0;
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        signal: controller ? controller.signal : undefined,
+      });
+      return response.ok ? 'sent' : 'failed';
+    } catch (err) {
+      return 'failed';
+    } finally {
+      window.clearTimeout(timer);
+    }
+  };
+
+  const showStatus = (kind, { mailto = '', email = '' } = {}) => {
+    const template = statusTemplates[kind];
+    if (!statusRegion || !template) return;
+    window.clearTimeout(statusTimer);
+    // A result replaces the explanation under the button (see contact.css). "Sending" is only
+    // read out by screen readers; sighted visitors see the spinner in the button.
+    if (kind !== 'sending') form.classList.add('has-status');
     // Empty first, then fill: a repeated message is announced again.
     statusRegion.textContent = '';
-    window.setTimeout(() => {
-      statusRegion.appendChild(statusTemplate.content.cloneNode(true));
+    statusTimer = window.setTimeout(() => {
+      const content = template.content.cloneNode(true);
+      if (mailto) content.querySelectorAll('[data-mailto-link]').forEach((link) => { link.href = mailto; });
+      if (email) content.querySelectorAll('[data-status-email]').forEach((el) => { el.textContent = email; });
+      statusRegion.appendChild(content);
       const box = statusRegion.firstElementChild;
-      if (box && gsap && !reducedMotion) {
+      if (kind === 'sending' || !box) return;
+      reveal(box);
+      if (gsap && !reducedMotion) {
         gsap.from(box, { opacity: 0, y: 8, duration: 0.5, ease: 'power3.out', clearProps: 'transform,opacity' });
       }
     }, 60);
   };
 
-  form.addEventListener('submit', (event) => {
+  // While the message is on its way the text fields are read-only, so nothing typed in the meantime
+  // is lost when the form empties after sending.
+  let locked = [];
+  const lockFields = (lock) => {
+    if (lock) {
+      locked = [...form.querySelectorAll('input:not([type="hidden"]), textarea')].filter((el) => !el.readOnly);
+      locked.forEach((el) => { el.readOnly = true; });
+    } else {
+      locked.forEach((el) => { el.readOnly = false; });
+      locked = [];
+    }
+  };
+
+  const wait = (ms) => new Promise((resolve) => { window.setTimeout(resolve, ms); });
+
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (busy) return;
 
@@ -178,16 +260,28 @@ function initForm(form) {
     }
 
     busy = true;
+    const body = buildPayload();
+    const sentTo = valueOf('email');
+    lockFields(true);
     if (submit) submit.classList.add('is-loading');
-    window.setTimeout(() => {
-      const href = buildMailto();
-      if (submit) submit.classList.remove('is-loading');
-      busy = false;
-      window.location.href = href;
-      // The status message replaces the explanation under the button (see contact.css).
-      form.classList.add('is-sent');
-      showStatus();
-    }, LOADING_MS);
+    showStatus('sending');
+    const [outcome] = await Promise.all([send(body), wait(MIN_BUSY_MS)]);
+    if (submit) submit.classList.remove('is-loading');
+    lockFields(false);
+    busy = false;
+
+    if (outcome === 'sent') {
+      form.reset();
+      fields.forEach((field) => {
+        field.dirty = false;
+        field.errored = false;
+        render(field, '');
+      });
+      showStatus('sent', { email: sentTo });
+    } else {
+      // The message stays in the form, so trying again is one click; the link opens it as a mail.
+      showStatus('failed', { mailto: buildMailto() });
+    }
   });
 }
 

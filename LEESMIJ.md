@@ -13,7 +13,7 @@ De site staat live op https://flowstateconsultancy.nl. Het is een statische site
 * `404.html`: pagina voor links die niet bestaan
 * `assets/`: stijlen, scripts, lettertypen en afbeeldingen
 
-Alles staat op je eigen domein: lettertypen, scripts en afbeeldingen. De site plaatst geen cookies en laadt niets van Google of andere partijen. Daardoor heb je ook geen cookiebanner nodig.
+Alles staat op je eigen domein: lettertypen, scripts en afbeeldingen. De site plaatst geen cookies en laadt niets van Google of andere partijen. Daardoor heb je ook geen cookiebanner nodig. Alleen het contactformulier stuurt iets naar een andere partij: het bericht gaat naar Formspark, zie hieronder.
 
 ## Hoe publiceren werkt
 
@@ -59,7 +59,16 @@ Ga daarna naar http://localhost:4321. Dubbelklikken op `index.html` werkt niet g
 
 ## Het contactformulier
 
-Het formulier verstuurt zelf niets. Na een klik op verzenden opent het mailprogramma van de bezoeker, met het bericht al ingevuld en gericht aan ali@flowstateconsultancy.nl. Zo heb je geen server of formulierdienst nodig.
+Het formulier stuurt elk bericht via Formspark, een Belgische formulierdienst, naar de mailbox van het Formspark-account. De bezoeker heeft daar geen eigen mailprogramma voor nodig. In de mail die je krijgt, staat het adres van de bezoeker als antwoordadres, dus je kunt gewoon op Beantwoorden klikken. De onderwerpregel is "Kennismaking via de website", met het gekozen onderwerp erachter.
+
+* Lukt het versturen niet, dan blijft het bericht in het formulier staan. De bezoeker kan het opnieuw proberen of het met één klik als mail versturen. Dat gebeurt ook als Formspark het bericht als spam weigert of als je tegoed op is.
+* Het gratis tegoed is 250 berichten, zonder maandlimiet en zonder einddatum. Geweigerde spam telt niet mee. Is het bijna op, koop dan in het dashboard van Formspark een nieuw pakket (eenmalig 25 dollar voor 50.000 berichten).
+* Bots die het verborgen veld `_gotcha` invullen, worden door Formspark geweigerd. Daarnaast heeft Formspark een eigen spamfilter. Wat dat filter tegenhoudt, staat 30 dagen onder Spam in het dashboard. Kijk daar af en toe, want een echt bericht kan er ook tussen zitten.
+* Zet onder Spam protection bij Allowed domains `flowstateconsultancy.nl`. Dan weigert Formspark berichten die niet van je eigen site komen.
+* Formspark bewaart elk bericht tot je het verwijdert. De privacyverklaring belooft dat berichten zonder samenwerking binnen een jaar weg zijn, dus verwijder ze ook in het dashboard van Formspark.
+* Het formulier-ID staat in `site/contact.html`. Een ander formulier koppel je met `node dev/set-formspark.mjs <formulier-ID>`, daarna `npm run check`, en dan push je naar `main`. Stuur daarna één testbericht via de live contactpagina en kijk of het binnenkomt. Zegt de pagina dat het niet is verstuurd, vergelijk dan het ID met dat in het dashboard.
+* `npm run check` houdt een publicatie tegen zolang het formulier geen geldig Formspark-adres heeft.
+* `node dev/qa/form-test.mjs` test het formulier in een browser tegen een nagebootste Formspark. Er wordt dan niets echt verstuurd.
 
 ## Mappen buiten `site`
 

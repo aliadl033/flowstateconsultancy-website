@@ -211,13 +211,17 @@ html.js .contact-scope.is-static .contact-scope__still { opacity: 1; }
   margin-top: var(--space-8);
 }
 .contact-form__actions .form-note { max-width: 44ch; }
-/* After sending, the status message takes the place of the explanation, which says the same thing. */
-.contact-form.is-sent .contact-form__actions > .form-note { display: none; }
+/* After sending, the status message takes the place of the explanation under the button. */
+.contact-form.has-status .contact-form__actions > .form-note { display: none; }
 /* The status region stays rendered (empty) so screen readers pick up the message when it arrives. */
 .contact-form__status { width: 100%; }
 .contact-form__status-box { margin-top: var(--space-8); }
 .contact-form__status-box .icon { margin-top: 2px; color: var(--accent-text); }
+.contact-form__status-box.form-status--success .icon { color: var(--success); }
+.contact-form__status-box.form-status--error .icon { color: var(--danger); }
 .contact-form__status-box p { max-width: 52ch; text-wrap: pretty; }
+/* The address the reply goes to can be long and has no spaces to break on. */
+.contact-form__sent-to { overflow-wrap: anywhere; font-weight: var(--weight-medium); }
 
 /* ---------- Wat er na je bericht gebeurt ---------- */
 .contact-steps { background-color: var(--bg-subtle); }

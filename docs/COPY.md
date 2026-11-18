@@ -259,15 +259,20 @@ Zie Gedeeld.
   * Bedrijf. Placeholder: Bedrijfsnaam.
   * E-mailadres (verplicht). Placeholder: naam@bedrijf.nl. Fout leeg: Vul je e-mailadres in. Fout ongeldig: Dit e-mailadres klopt nog niet. Controleer of er een @ en een domein in staan.
   * Telefoonnummer. Placeholder: 06 12345678. Hint: Alleen als je liever gebeld wordt.
-  * Onderwerp (keuzelijst): Salestraining, Coaching op de vloer, Gespreksanalyse, Coaching voor teamleiders, Iets anders
+  * Onderwerp (keuzelijst, begint op "Kies een onderwerp" zonder waarde): Salestraining, Coaching op de vloer, Gespreksanalyse, Coaching voor teamleiders, Iets anders
   * Bericht (verplicht). Placeholder: Bijvoorbeeld: we hebben een outbound team en de conversie zakt. Fout: Schrijf een paar zinnen over wat er speelt.
 * Verplicht-uitleg: Velden met een * zijn verplicht.
 * Privacyzin: We gebruiken je gegevens alleen om op je bericht te reageren. Lees de privacyverklaring. (link naar privacy.html)
 * Knop: Verstuur bericht
-* Uitleg onder de knop: Na verzenden opent je mailprogramma met je bericht erin. Je hoeft de mail dan alleen nog te versturen.
-* Statusmelding na verzenden: Je mailprogramma opent nu met je bericht. Verstuur de mail om het af te ronden. Opent er niets, mail dan naar ali@flowstateconsultancy.nl.
-* Onderwerpregel van de mail: Kennismaking via de website: [onderwerp]
-* Inhoud van de mail: Naam, Bedrijf, E-mailadres, Telefoonnummer, Onderwerp, gevolgd door het bericht.
+* Uitleg onder de knop: Je bericht komt via onze formulierdienst Formspark direct in onze mailbox.
+* Uitleg zonder JavaScript: Zonder JavaScript kom je na het versturen op een pagina van Formspark.
+* Bedankpagina van Formspark zonder JavaScript: Je bericht is verstuurd. We mailen je zo snel mogelijk terug op het adres dat je hebt ingevuld.
+* Tijdens het versturen (alleen voor schermlezers): Bezig met versturen.
+* Statusmelding als het gelukt is: Je bericht is verstuurd. We mailen je zo snel mogelijk terug op [ingevuld e-mailadres].
+* Statusmelding als het niet gelukt is: Je bericht is niet verstuurd. Probeer het nog een keer, of mail het naar ali@flowstateconsultancy.nl. (De link opent een mail met het bericht al ingevuld.)
+* Onderwerpregel van de mail: Kennismaking via de website: [onderwerp], of zonder onderwerp alleen Kennismaking via de website
+* Afzendernaam van de mail: Website Flow State Consultancy
+* Inhoud van de mail: naam, bedrijf, email, telefoon, onderwerp en bericht, alleen de velden die zijn ingevuld. Het e-mailadres van de bezoeker is het antwoordadres.
 
 ## Wat er na je bericht gebeurt
 
@@ -300,17 +305,17 @@ Zie Gedeeld.
 * Title: Privacyverklaring | Flow State Consultancy
 * Meta description: Hoe Flow State Consultancy omgaat met persoonsgegevens: welke gegevens we verwerken, waarom, hoe lang we ze bewaren en welke rechten je hebt.
 * H1: Privacyverklaring
-* Datum: Laatst bijgewerkt: 14 november 2026
+* Datum: Laatst bijgewerkt: 18 november 2026
 * Intro: Flow State Consultancy gaat zorgvuldig om met persoonsgegevens. In deze verklaring lees je welke gegevens we verwerken, waarom we dat doen en welke rechten je hebt.
 
 1. Wie we zijn. Flowstate Consultancy B.V., die deze website voert onder de naam Flow State Consultancy, is verantwoordelijk voor de verwerking van persoonsgegevens zoals beschreven in deze verklaring. Adres: Bredesteeg 6, 3811 WS Amersfoort. KvK-nummer: 98730185. E-mail: ali@flowstateconsultancy.nl.
 2. Welke gegevens we verwerken. We verwerken alleen gegevens die je zelf aan ons geeft, bijvoorbeeld als je ons mailt of het contactformulier gebruikt: je naam, de naam van je bedrijf, je e-mailadres, eventueel je telefoonnummer en de inhoud van je bericht. Werken we samen, dan verwerken we ook de contactgegevens die nodig zijn om de opdracht uit te voeren en te factureren.
 3. Waarom we die gegevens gebruiken. Om te reageren op je vraag of je verzoek om een kennismaking. Om een voorstel te maken en een opdracht uit te voeren. Om te factureren en te voldoen aan wettelijke verplichtingen, zoals de fiscale bewaarplicht.
 4. Grondslag. We verwerken je gegevens omdat dat nodig is om een overeenkomst voor te bereiden of uit te voeren, omdat we een gerechtvaardigd belang hebben om op je bericht te reageren, of omdat de wet ons daartoe verplicht.
-5. Hoe lang we gegevens bewaren. We bewaren gegevens niet langer dan nodig. Berichten van mensen met wie geen samenwerking ontstaat, verwijderen we uiterlijk een jaar na het laatste contact. Gegevens die we nodig hebben voor de administratie bewaren we zeven jaar, omdat de wet dat voorschrijft.
-6. Delen met anderen. We verkopen je gegevens niet. We delen ze alleen met partijen die we nodig hebben voor onze dienstverlening, zoals onze e-mail- en hostingprovider en onze boekhouder, en alleen voor zover dat nodig is. Met die partijen maken we afspraken over de beveiliging van je gegevens.
-7. Cookies en externe diensten. Deze website plaatst geen cookies en gebruikt geen analyse- of advertentiediensten. Lettertypen en scripts staan op onze eigen server, dus je browser maakt geen verbinding met partijen zoals Google. Onze hostingprovider kan technische gegevens zoals je IP-adres tijdelijk vastleggen in serverlogs, om de website veilig en bereikbaar te houden.
-8. Het contactformulier. Het contactformulier verstuurt niets via deze website. Als je op verzenden klikt, opent je eigen mailprogramma met je bericht. Je bepaalt zelf of je die mail verstuurt.
+5. Hoe lang we gegevens bewaren. We bewaren gegevens niet langer dan nodig. Berichten van mensen met wie geen samenwerking ontstaat, verwijderen we uiterlijk een jaar na het laatste contact. Dat geldt ook voor de kopie bij onze formulierdienst. Gegevens die we nodig hebben voor de administratie bewaren we zeven jaar, omdat de wet dat voorschrijft.
+6. Delen met anderen. We verkopen je gegevens niet. We delen ze alleen met partijen die we nodig hebben voor onze dienstverlening, zoals onze formulierdienst, onze e-mail- en hostingprovider en onze boekhouder, en alleen voor zover dat nodig is. Met die partijen maken we afspraken over de beveiliging van je gegevens.
+7. Cookies en externe diensten. Deze website plaatst geen cookies en gebruikt geen analyse- of advertentiediensten. Lettertypen en scripts staan op onze eigen server, dus je browser maakt geen verbinding met partijen zoals Google. Alleen als je het contactformulier verstuurt, gaat je bericht naar onze formulierdienst. Hoe dat werkt, lees je bij het contactformulier (link naar #contactformulier). Onze hostingprovider kan technische gegevens zoals je IP-adres tijdelijk vastleggen in serverlogs, om de website veilig en bereikbaar te houden.
+8. Het contactformulier. Als je het contactformulier verstuurt, gaat je bericht naar Formspark. Dat is de formulierdienst van Trampoline Software SRL in België. Formspark stuurt je bericht per mail naar ons door en bewaart het in de Europese Unie, in Ierland en Duitsland. Formspark verwerkt daarbij ook technische gegevens: je IP-adres, de plaats die daaruit volgt, je browser en de pagina waarop je het formulier invult. Die gebruikt Formspark om spam tegen te houden en de dienst te beveiligen. Je IP-adres en de plaats bewaart Formspark twaalf maanden. Met Formspark hebben we een verwerkersovereenkomst. Daarin staat dat Formspark je gegevens alleen in onze opdracht verwerkt. Stuur je liever niets via een formulierdienst, mail ons dan direct op ali@flowstateconsultancy.nl.
 9. Beveiliging. We nemen passende technische en organisatorische maatregelen om je gegevens te beschermen tegen verlies en onbevoegd gebruik.
 10. Jouw rechten. Je hebt het recht om je gegevens in te zien, te laten corrigeren of te laten verwijderen. Je kunt ook bezwaar maken tegen de verwerking of vragen om je gegevens over te dragen. Stuur je verzoek naar ali@flowstateconsultancy.nl. We reageren binnen een maand.
 11. Klacht indienen. Als je niet tevreden bent over hoe we met je gegevens omgaan, laat het ons dan weten. Je hebt ook het recht om een klacht in te dienen bij de Autoriteit Persoonsgegevens via autoriteitpersoonsgegevens.nl.

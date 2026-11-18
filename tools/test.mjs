@@ -60,6 +60,11 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'signaal-test-'));
 fs.cpSync(path.join(ROOT, 'tools'), path.join(tmp, 'tools'), { recursive: true });
 fs.cpSync(path.join(ROOT, 'site'), path.join(tmp, 'site'), { recursive: true, filter: (src) => !src.includes(`${path.sep}_lab`) });
 fs.copyFileSync(path.join(ROOT, 'package.json'), path.join(tmp, 'package.json'));
+// These tests are about the tooling, not about this repository's settings, so the copy always gets
+// a valid contact form endpoint, also before the real Formspark form ID is filled in.
+const contactCopy = path.join(tmp, 'site', 'contact.html');
+const TEST_FORM_ACTION = 'action="https://submit-form.com/testform1"';
+fs.writeFileSync(contactCopy, fs.readFileSync(contactCopy, 'utf8').replace(/action="https:\/\/submit-form\.com\/[^"]*"/, TEST_FORM_ACTION));
 fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(tmp, 'node_modules'), 'dir');
 const contentDir = path.join(tmp, 'content', 'blog');
 
@@ -189,6 +194,17 @@ try {
 
   test('a second e-mail address on the page fails the check', () => {
     expectFail('check', baseMeta(), baseBody('Mail naar [info@flowstateconsultancy.nl](mailto:info@flowstateconsultancy.nl).'), /differs from organization\.email/);
+  });
+
+  test('a contact form without a Formspark form ID fails the check', () => {
+    const original = fs.readFileSync(contactCopy, 'utf8');
+    assert.ok(original.includes(TEST_FORM_ACTION), 'the copy of contact.html has no test endpoint');
+    try {
+      fs.writeFileSync(contactCopy, original.replace(TEST_FORM_ACTION, 'action="https://submit-form.com/FORMULIER-ID"'));
+      expectFail('check', baseMeta(), baseBody(), /not to a Formspark form/);
+    } finally {
+      fs.writeFileSync(contactCopy, original);
+    }
   });
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
